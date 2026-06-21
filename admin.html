@@ -140,10 +140,19 @@ async function apiRaw(body){
   const res=await fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
   return res.json();
 }
+const _cache={};
+const READONLY=new Set(['dashboard','list','seats','courses','tokens','certList','notifications','usersList','certSettings','backupStatus','me']);
+function clearCache(){for(const k in _cache)delete _cache[k];}
 async function api(action,payload){
   const d=await apiRaw({apiAction:'admin',token:TOKEN,action:action,payload:payload||{}});
   if(d && d.relogin){ doLogout(); throw new Error('หมดเวลาเข้าสู่ระบบ'); }
+  if(!READONLY.has(action))clearCache();
   return d;
+}
+async function apiCached(action,payload,ttl){
+  const k=action+':'+JSON.stringify(payload||{});const c=_cache[k];
+  if(c && Date.now()-c.t<(ttl||15000))return c.d;
+  const d=await api(action,payload);_cache[k]={t:Date.now(),d:d};return d;
 }
 
 async function doLogin(){
@@ -181,7 +190,7 @@ function go(s){
 const C=()=>document.getElementById('content');
 
 // ---- ภาพรวม ----
-async function rDash(){const r=await api('dashboard');if(!r.ok){C().innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+async function rDash(){const r=await apiCached('dashboard',{},15000);if(!r.ok){C().innerHTML='<div class="empty">ผิดพลาด</div>';return;}
   const t=r.totals;
   const k=[['ผู้สมัคร',t.total],['ชำระแล้ว',t.paid],['ยืนยันสิทธิ์',t.confirmed],['สำรอง',t.waitlist],['รอตรวจสลิป',t.pending],['รายได้',t.revenue.toLocaleString()+' ฿']];
   let h='<div class="kpis">'+k.map(x=>'<div class="kpi"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join('')+'</div>';
@@ -241,11 +250,21 @@ async function rSeat(){var r=await api('seats');if(!r.ok){C().innerHTML='<div cl
 }
 async function promote(c){var r=await api('promote',{course:c});alert(r.ok?('เลื่อนขึ้นแล้ว: '+r.promoted):('ผิดพลาด: '+r.error));rSeat();}
 // ---- เช็กชื่อ ----
-async function rCheck(){var r=await api('seats');var opts=(r.ok?r.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
+async function rCheck(){var r=await apiCached('seats',{},15000);var opts=(r.ok?r.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
   C().innerHTML='<div class="panel"><h3 class="st">สร้าง QR/ลิงก์ เช็กชื่อ</h3><div class="bar"><select id="ckC">'+opts+'</select>หมดอายุใน <input id="ckM" type="number" value="120" style="width:70px"> นาที'+
-    '<button class="b ok" onclick="mkTok(\'in\')">QR เข้า</button><button class="b no" onclick="mkTok(\'out\')">QR ออก</button></div><div id="ckOut"></div><h3 class="st" style="margin-top:14px">ลิงก์ที่ใช้งานอยู่</h3><div id="ckL"></div></div>';
-  loadTok();
+    '<button class="b ok" onclick="mkTok(\'in\')">QR เข้า</button><button class="b no" onclick="mkTok(\'out\')">QR ออก</button></div><div id="ckOut"></div><h3 class="st" style="margin-top:14px">ลิงก์ที่ใช้งานอยู่</h3><div id="ckL"></div></div>'+
+    '<div class="panel"><h3 class="st">เช็กชื่อผ่าน LINE (ห้องอบรม)</h3><p class="muted">เปิดให้ผู้เรียนกดเช็กชื่อจากเมนูห้องอบรมได้โดยตรง — เลือกโหมดต่อหลักสูตร (กันเช็กซ้ำร่วมกับ QR อัตโนมัติ)</p><div class="bar" style="margin-top:8px">เปิดครั้งละ <input id="lckMin" type="number" value="180" style="width:80px"> นาที <span class="muted">(หมดเวลาแล้วระบบปิดให้เอง)</span></div><div id="lckB" style="margin-top:6px"><div class="empty">กำลังโหลด...</div></div></div>';
+  loadTok();loadLineCk();
 }
+async function loadLineCk(){var r=await api('lineCheckinStatus');var el=document.getElementById('lckB');if(!r.ok){el.innerHTML='<div class="empty">'+esc(r.error||'ผิดพลาด')+'</div>';return;}
+  if(!r.courses.length){el.innerHTML='<div class="empty">ยังไม่มีหลักสูตร</div>';return;}
+  el.innerHTML='<table><tr><th>หลักสูตร</th><th>สถานะเช็กชื่อ LINE</th><th>เปลี่ยน</th></tr>'+r.courses.map(c=>{
+    var lbl=c.mode==='in'?'<span class="badge b-ok">เปิด: เช็กเข้า</span>':c.mode==='out'?'<span class="badge b-ok">เปิด: เช็กออก</span>':'<span class="badge b-no">ปิด</span>';
+    if(c.mode&&c.expire_at)lbl+='<br><span class="muted" style="font-size:11.5px">ถึง '+esc(c.expire_at)+'</span>';
+    var sel='<select onchange="setLineCk(\''+esc(c.course_id)+'\',this.value)"><option value="off"'+(!c.mode?' selected':'')+'>ปิด</option><option value="in"'+(c.mode==='in'?' selected':'')+'>เปิด-เช็กเข้า</option><option value="out"'+(c.mode==='out'?' selected':'')+'>เปิด-เช็กออก</option></select>';
+    return '<tr><td>'+esc(c.course_id)+' '+esc(c.course_name)+'</td><td>'+lbl+'</td><td>'+sel+'</td></tr>';}).join('')+'</table>';
+}
+async function setLineCk(course,mode){var mn=document.getElementById('lckMin');var minutes=mn?mn.value:180;var r=await api('lineCheckinSet',{course,mode,minutes});if(!r.ok)alert('ผิดพลาด: '+r.error);loadLineCk();}
 async function mkTok(m){var r=await api('createToken',{course:document.getElementById('ckC').value,mode:m,minutes:document.getElementById('ckM').value});
   if(!r.ok){document.getElementById('ckOut').innerHTML='<div class="empty">ผิดพลาด: '+r.error+'</div>';return;}
   document.getElementById('ckOut').innerHTML='<div style="text-align:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px"><b>'+(m==='in'?'เช็กชื่อเข้า':'เช็กชื่อออก')+' · หมดอายุ '+esc(r.expire_at)+'</b><br><img src="'+r.qr_url+'" style="width:200px;height:200px"><br><a href="'+r.url+'" target="_blank" style="font-size:12px;word-break:break-all">'+esc(r.url)+'</a></div>';loadTok();}
@@ -253,7 +272,7 @@ async function loadTok(){var r=await api('tokens');var el=document.getElementByI
   el.innerHTML='<table><tr><th>หลักสูตร</th><th>ประเภท</th><th>หมดอายุ</th><th>ลิงก์</th><th></th></tr>'+r.rows.map(t=>'<tr><td>'+esc(t.course_id)+'</td><td>'+(t.mode==='in'?'เข้า':'ออก')+'</td><td>'+(t.expired?'<span class="muted">หมดอายุ</span>':esc(t.expire_at))+'</td><td><a href="'+t.url+'" target="_blank">เปิด</a></td><td><button class="b no" onclick="delTok(\''+t.token_id+'\')">ปิด</button></td></tr>').join('')+'</table>';}
 async function delTok(id){await api('deactivateToken',{token_id:id});loadTok();}
 // ---- เกียรติบัตร ----
-async function rCert(){var s=await api('seats');var opts='<option value="">ทุกหลักสูตร</option>'+(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+'</option>').join('');
+async function rCert(){var s=await apiCached('seats',{},15000);var opts='<option value="">ทุกหลักสูตร</option>'+(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+'</option>').join('');
   C().innerHTML='<div class="panel"><div class="bar"><select id="ctC" onchange="certList()">'+opts+'</select><button class="b sl" onclick="certSettings()">ตั้งค่ารูปแบบ/ข้อความ</button><button class="b gh" onclick="prevCert()">ดูตัวอย่างดีไซน์</button><button class="b pr" onclick="issueAll()">ออกทั้งรุ่น</button><span class="muted" id="ctMsg"></span></div><div id="ctSet"></div><div id="ctB"></div></div>';
   certList();
 }
@@ -278,7 +297,7 @@ async function issueAll(){var c=document.getElementById('ctC').value;if(!confirm
 async function resendCert(id){var r=await api('resendCert',{id});alert(r.ok?'ส่งซ้ำแล้ว':('ผิดพลาด: '+r.error));}
 async function prevCert(){document.getElementById('ctMsg').textContent='กำลังสร้าง...';var r=await api('previewCert');if(r.ok){document.getElementById('ctMsg').textContent='';window.open(r.url,'_blank');}else document.getElementById('ctMsg').textContent='ผิดพลาด: '+r.error;}
 // ---- แจ้งเตือน ----
-async function rNotify(){var s=await api('seats');var opts=(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
+async function rNotify(){var s=await apiCached('seats',{},15000);var opts=(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
   C().innerHTML='<div class="panel"><h3 class="st">ส่งแจ้งเตือนเป็นชุด (อีเมล)</h3><div class="bar"><select id="ntC">'+opts+'</select><select id="ntT"><option value="reminder">แจ้งเตือนก่อนอบรม</option><option value="room_link">ส่งลิงก์ห้อง</option><option value="ask_eval">ให้ทำแบบประเมิน</option></select><button class="b pr" onclick="sendN()">ส่ง</button><span class="muted" id="ntMsg"></span></div><p class="muted">* อีเมลอัตโนมัติ (สมัคร/ยืนยัน/ผ่านเกณฑ์) ส่งเองตามเหตุการณ์</p><h3 class="st" style="margin-top:10px">ประวัติล่าสุด</h3><div class="scroll" id="ntL"></div></div>';
   loadNL();
 }
