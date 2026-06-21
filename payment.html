@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ชำระเงิน — PaiPen · ไปเป็น</title>
+<!-- แก้ [เลขพร้อมเพย์] [ชื่อบัญชี] [ธนาคาร/เลขบัญชี] และรูป QR (promptpay.png) ให้ตรงของจริง -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--clay:#C2724E;--clay-d:#A65A39;
+    --sage:#6E8560;--sage-s:#E5ECDC;--mustard:#D9A227;--mustard-s:#F8EBC8;--line:#E7DAC1;--cocoa:#5A4636}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;
+    box-shadow:0 14px 30px rgba(90,70,54,.14);max-width:460px;width:100%;padding:26px 24px;text-align:center}
+  h1{font-family:'Prompt';font-size:23px;color:var(--cocoa);margin-bottom:2px}
+  .sub{color:var(--soft);font-size:14px;margin-bottom:16px}
+  .amount{font-family:'Prompt';font-weight:700;font-size:40px;color:var(--clay-d);margin:6px 0}
+  .amount .u{font-size:18px}
+  .qr{margin:14px auto;width:220px;height:220px;border:1.5px dashed var(--clay);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+  .qr img{width:100%;height:100%;object-fit:contain}
+  .qr .ph{color:var(--soft);font-size:13px;padding:10px}
+  .acct{background:var(--sage-s);border:1.5px solid var(--sage);border-radius:14px;padding:14px;margin:12px 0;text-align:left}
+  .acct .row{display:flex;justify-content:space-between;font-size:14.5px;padding:4px 0}
+  .acct .row b{font-family:'Prompt';color:var(--cocoa)}
+  .steps{text-align:left;font-size:14px;color:var(--ink);margin:14px 0}
+  .steps li{margin:7px 0 7px 18px}
+  .btn{display:block;text-decoration:none;color:#fff;font-family:'Prompt';font-weight:600;font-size:17px;
+    padding:14px;border-radius:14px;background:var(--clay);box-shadow:0 7px 0 var(--clay-d);margin-top:10px}
+  .btn.ghost{background:var(--paper);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+  .note{font-size:12.5px;color:var(--soft);margin-top:14px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>ชำระเงิน</h1>
+    <p class="sub">PaiPen · ไปเป็น — AI เพื่อครูมืออาชีพ</p>
+
+    <div class="amount"><span class="u">฿</span>199</div>
+    <div class="sub">ค่าอบรม (ตรวจสอบยอดจริงในหน้าหลักสูตรแต่ละรุ่น)</div>
+
+    <!-- รูป QR พร้อมเพย์: วางไฟล์ promptpay.png ไว้โฟลเดอร์เดียวกัน -->
+    <div class="qr">
+      <img src="promptpay.png" alt="PromptPay QR" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="ph" style="display:none">วางรูป QR พร้อมเพย์ชื่อ promptpay.png</div>
+    </div>
+
+    <div class="acct">
+      <div class="row"><span>ชื่อบัญชี</span><b>นาย ไพศาล ดาแร่</b></div>
+      <div class="row"><span>ธนาคาร</span><b>ทีทีบี (ttb)</b></div>
+      <div class="row"><span>ช่องทาง</span><b>พร้อมเพย์ — สแกน QR ด้านบน</b></div>
+    </div>
+
+    <ol class="steps">
+      <li>โอนเงินตามยอดค่าอบรม</li>
+      <li><b>บันทึกสลิป</b> ไว้ในเครื่อง</li>
+      <li>กด <b>“กรอกใบสมัคร + แนบสลิป”</b> ด้านล่าง แล้วอัปโหลดสลิป</li>
+      <li>รอเจ้าหน้าที่ตรวจสอบและแจ้งยืนยันสิทธิ์</li>
+    </ol>
+
+    <a class="btn" href="register.html">กรอกใบสมัคร + แนบสลิป</a>
+    <a class="btn ghost" href="status.html">เช็กสถานะการสมัคร</a>
+
+    <p class="note">ส่งสลิปผ่านใบสมัครเท่านั้น เพื่อให้ระบบบันทึกอัตโนมัติ</p>
+  </div>
+</body>
+</html>
