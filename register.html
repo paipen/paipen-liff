@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครอบรม — PaiPen · ไปเป็น</title>
+<!--
+  เพจกรอกใบสมัคร (โฮสต์บน GitHub Pages) — ยิงข้อมูลเข้า Google Apps Script Web App
+  ไม่บังคับล็อกอิน Google / อัปโหลดสลิปได้ในตัว (แปลงเป็น base64 ส่งไป GAS แล้วบันทึกลง Drive)
+
+  *** ก่อนใช้งานจริง ***
+  1) แก้ค่า WEBAPP_URL ด้านล่างเป็น URL /exec ของ Apps Script ที่ deploy แล้ว
+  2) วางไฟล์ logo.png ไว้โฟลเดอร์เดียวกัน
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FAF3E7; --cream2:#F1E7D3; --paper:#FFFCF6;
+    --ink:#4A3A2C; --ink-soft:#7C6B58;
+    --clay:#C2724E; --clay-deep:#A65A39; --clay-soft:#F3E1D5;
+    --sage:#8CA17B; --sage-deep:#6E8560; --sage-soft:#E5ECDC;
+    --mustard:#E0A82E; --mustard-soft:#F8EBC8;
+    --line:#E7DAC1; --err:#C0392B;
+    --shadow:0 14px 30px rgba(90,70,54,.15); --radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;color:var(--ink);background:var(--cream);
+    background-image:radial-gradient(circle at 12% 6%,var(--sage-soft) 0,transparent 22%),
+      radial-gradient(circle at 88% 10%,var(--mustard-soft) 0,transparent 20%);line-height:1.6}
+  h1,h2,label.sec,.btn{font-family:'Prompt',sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 60px}
+  .logo-wrap{text-align:center;padding:8px 0}
+  .logo-wrap img{width:min(82%,440px);height:auto}
+  .logo-fallback{display:none;font-family:'Prompt';font-weight:700;font-size:22px;color:#5A4636}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px 22px;margin-top:14px}
+  .head{text-align:center;margin-bottom:6px}
+  .head h1{font-size:23px;font-weight:700}
+  .head p{color:var(--ink-soft);font-size:14.5px;margin-top:6px}
+  .sec-title{font-family:'Prompt';font-weight:600;font-size:16px;color:var(--clay-deep);
+    margin:22px 0 10px;padding-bottom:6px;border-bottom:2px dashed var(--line)}
+  .sec-title:first-of-type{margin-top:8px}
+  .field{margin-bottom:14px}
+  label{display:block;font-weight:600;font-size:14.5px;margin-bottom:6px}
+  label .req{color:var(--clay);font-weight:700}
+  input,select,textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+    background:var(--cream2);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--sage);background:#fff}
+  textarea{min-height:74px;resize:vertical}
+  .hint{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+  .file-box{border:1.5px dashed var(--clay);background:var(--clay-soft);border-radius:12px;padding:14px;text-align:center}
+  .file-box input{background:transparent;border:none;padding:6px 0}
+  .consent{display:flex;gap:10px;align-items:flex-start;background:var(--sage-soft);
+    border:1.5px solid var(--sage);border-radius:12px;padding:13px}
+  .consent input{width:20px;height:20px;flex:0 0 20px;margin-top:2px}
+  .consent label{font-weight:500;font-size:13.5px;margin:0}
+  .btn{width:100%;margin-top:20px;border:none;cursor:pointer;color:#fff;font-weight:600;font-size:18px;
+    padding:16px;border-radius:16px;background:var(--clay);box-shadow:0 8px 0 var(--clay-deep);
+    transition:transform .12s,box-shadow .12s}
+  .btn:active{transform:translateY(4px);box-shadow:0 4px 0 var(--clay-deep)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .err-msg{color:var(--err);font-size:13px;margin-top:6px;display:none}
+  .note{font-size:12px;color:#a8997f;text-align:center;margin-top:14px}
+  /* success */
+  #done{display:none;text-align:center;padding:34px 22px}
+  #done .ic{font-size:54px}
+  #done h2{font-size:22px;margin:10px 0;color:var(--sage-deep)}
+  #done .code{display:inline-block;font-family:'Prompt';font-weight:700;font-size:20px;color:var(--clay-deep);
+    background:var(--clay-soft);border:1.5px dashed var(--clay);border-radius:12px;padding:8px 20px;margin:8px 0}
+  #done p{color:var(--ink-soft);font-size:14.5px;margin-top:8px}
+  .spinner{display:none;margin:10px auto 0;width:26px;height:26px;border:3px solid var(--clay-soft);
+    border-top-color:var(--clay);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo-wrap">
+    <img src="logo1.png" alt="PaiPen · ไปเป็น"
+         onerror="this.style.display='none';document.getElementById('lf').style.display='block'">
+    <div class="logo-fallback" id="lf">PaiPen · ไปเป็น</div>
+  </div>
+
+  <!-- ===== FORM ===== -->
+  <div class="card" id="formCard">
+    <div class="head">
+      <h1>ใบสมัครอบรมออนไลน์</h1>
+      <p>การพัฒนานวัตกรรมการเรียนรู้ด้วย AI สำหรับครูมืออาชีพ<br>
+         กรอกข้อมูลให้ครบ เจ้าหน้าที่จะตรวจสอบและแจ้งผลการยืนยันสิทธิ์</p>
+    </div>
+
+    <form id="regForm" novalidate>
+      <div class="sec-title">1 — ข้อมูลส่วนตัว</div>
+      <div class="field"><label>คำนำหน้า <span class="req">*</span></label>
+        <select name="prefix" id="prefix" required>
+          <option value="">— เลือก —</option>
+          <option>นาย</option><option>นาง</option><option>นางสาว</option>
+          <option>ว่าที่ ร.ต.</option><option>ดร.</option><option>อื่น ๆ</option>
+        </select></div>
+      <div class="field" id="prefixOtherWrap" style="display:none">
+        <label>ระบุคำนำหน้า <span class="req">*</span></label>
+        <input name="prefix_other" id="prefix_other" disabled placeholder="พิมพ์คำนำหน้าของท่าน"></div>
+      <div class="field"><label>ชื่อ–นามสกุล (ภาษาไทย) <span class="req">*</span></label>
+        <input name="full_name_th" required></div>
+      <div class="field"><label>ชื่อ–นามสกุล (ภาษาอังกฤษ)</label>
+        <input name="full_name_en"><div class="hint">สำหรับพิมพ์บนเกียรติบัตรในอนาคต</div></div>
+      <div class="field"><label>ตำแหน่ง <span class="req">*</span></label>
+        <input name="position" placeholder="เช่น ครู, ครูชำนาญการ, ผอ." required></div>
+
+      <div class="sec-title">2 — หน่วยงาน</div>
+      <div class="field"><label>หน่วยงาน / สถานศึกษา <span class="req">*</span></label>
+        <input name="organization" required></div>
+      <div class="field"><label>สังกัด <span class="req">*</span></label>
+        <select name="affiliation" id="affiliation" required>
+          <option value="">— เลือก —</option>
+          <option>สพฐ.</option><option>สอศ.</option><option>สช.</option>
+          <option>กทม.</option><option>อปท.</option><option>มหาวิทยาลัย</option><option>อื่น ๆ</option>
+        </select></div>
+      <div class="field" id="affiliationOtherWrap" style="display:none">
+        <label>ระบุสังกัด <span class="req">*</span></label>
+        <input name="affiliation_other" id="affiliation_other" disabled placeholder="พิมพ์สังกัดของท่าน"></div>
+      <div class="field"><label>จังหวัด <span class="req">*</span></label>
+        <input name="province" list="provinces" required>
+        <datalist id="provinces"></datalist></div>
+
+      <div class="sec-title">3 — การติดต่อ</div>
+      <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label>
+        <input name="phone" inputmode="numeric" required>
+        <div class="err-msg" data-for="phone">กรอกเฉพาะตัวเลข 9–10 หลัก</div></div>
+      <div class="field"><label>อีเมล <span class="req">*</span></label>
+        <input name="email" type="email" required>
+        <div class="hint">ใช้รับเกียรติบัตรและการแจ้งผล</div>
+        <div class="err-msg" data-for="email">กรอกอีเมลให้ถูกต้อง</div></div>
+      <div class="field"><label>LINE Display Name</label>
+        <input name="line_name"><div class="hint">เพื่อยืนยันตัวตนใน LINE ภายหลัง (ไม่บังคับ)</div></div>
+
+      <div class="sec-title">4 — ข้อมูลการอบรม</div>
+      <div class="field"><label>หลักสูตร / รุ่นที่สมัคร <span class="req">*</span></label>
+        <select name="course_id" id="course_id" required>
+          <option value="">— เลือก —</option>
+          <option value="R01">รุ่นที่ 1 (R01)</option>
+        </select></div>
+      <div class="field"><label>ระดับการใช้ AI ปัจจุบัน <span class="req">*</span></label>
+        <select name="ai_level" required>
+          <option value="">— เลือก —</option>
+          <option>ไม่เคยใช้</option><option>เคยใช้บ้าง</option><option>ใช้เป็นประจำ</option>
+        </select></div>
+      <div class="field"><label>ความคาดหวังจากการอบรม</label>
+        <textarea name="expectation" placeholder="อยากได้อะไรจากคอร์สนี้ (ไม่บังคับ)"></textarea></div>
+
+      <div class="sec-title">5 — การชำระเงิน</div>
+      <div class="field"><label>ยอดที่โอน (บาท) <span class="req">*</span></label>
+        <input name="amount" inputmode="numeric" placeholder="199" required>
+        <div class="err-msg" data-for="amount">กรอกเป็นตัวเลข</div></div>
+      <div class="field"><label>วันที่/เวลาที่โอน</label>
+        <input name="payment_date" placeholder="เช่น 20/07/69 14:30"></div>
+      <div class="field"><label>หลักฐานการชำระเงิน (สลิป) <span class="req">*</span></label>
+        <div class="file-box">
+          <input type="file" id="slip" accept="image/*,application/pdf" required>
+          <div class="hint">รูปหรือ PDF ไม่เกิน 8MB</div>
+        </div>
+        <div class="err-msg" data-for="slip">กรุณาแนบสลิป (ไม่เกิน 8MB)</div></div>
+
+      <div class="sec-title">6 — ความยินยอม (PDPA)</div>
+      <div class="consent">
+        <input type="checkbox" id="consent" required>
+        <label for="consent">ข้าพเจ้ายินยอมให้เก็บ ใช้ และประมวลผลข้อมูลเพื่อการสมัครอบรม
+          การตรวจสอบการชำระเงิน การจัดอบรม การออกเกียรติบัตร และการรายงานผลโครงการเท่านั้น</label>
+      </div>
+      <div class="err-msg" data-for="consent" style="text-align:center">กรุณายอมรับเงื่อนไขก่อนส่ง</div>
+
+      <button type="submit" class="btn" id="submitBtn">ส่งใบสมัคร</button>
+      <div class="spinner" id="spin"></div>
+      <div class="err-msg" id="globalErr" style="text-align:center">ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div>
+      <p class="note">ข้อมูลของท่านจะถูกใช้เพื่อการจัดอบรมและออกเกียรติบัตรเท่านั้น</p>
+    </form>
+  </div>
+
+  <!-- ===== SUCCESS ===== -->
+  <div class="card" id="done">
+    <div class="ic">🎉</div>
+    <h2>รับใบสมัครเรียบร้อยแล้ว</h2>
+    <p>รหัสสมัครของคุณคือ</p>
+    <div class="code" id="regCode">—</div>
+    <p>กรุณาบันทึกรหัสนี้ไว้ตรวจสอบสถานะ<br>
+       เจ้าหน้าที่จะตรวจสอบการชำระเงินและแจ้งผลการยืนยันสิทธิ์ทางอีเมล/LINE</p>
+  </div>
+</div>
+
+<script>
+  // ====== ตั้งค่า ======
+  const WEBAPP_URL = "[วาง URL /exec ของ Apps Script ที่ deploy แล้ว]";
+  const MAX_FILE = 8 * 1024 * 1024; // 8MB
+
+  // เติมรายชื่อจังหวัด
+  const PROVINCES = ["กรุงเทพมหานคร","กระบี่","กาญจนบุรี","กาฬสินธุ์","กำแพงเพชร","ขอนแก่น","จันทบุรี","ฉะเชิงเทรา","ชลบุรี","ชัยนาท","ชัยภูมิ","ชุมพร","เชียงราย","เชียงใหม่","ตรัง","ตราด","ตาก","นครนายก","นครปฐม","นครพนม","นครราชสีมา","นครศรีธรรมราช","นครสวรรค์","นนทบุรี","นราธิวาส","น่าน","บึงกาฬ","บุรีรัมย์","ปทุมธานี","ประจวบคีรีขันธ์","ปราจีนบุรี","ปัตตานี","พระนครศรีอยุธยา","พะเยา","พังงา","พัทลุง","พิจิตร","พิษณุโลก","เพชรบุรี","เพชรบูรณ์","แพร่","ภูเก็ต","มหาสารคาม","มุกดาหาร","แม่ฮ่องสอน","ยโสธร","ยะลา","ร้อยเอ็ด","ระนอง","ระยอง","ราชบุรี","ลพบุรี","ลำปาง","ลำพูน","เลย","ศรีสะเกษ","สกลนคร","สงขลา","สตูล","สมุทรปราการ","สมุทรสงคราม","สมุทรสาคร","สระแก้ว","สระบุรี","สิงห์บุรี","สุโขทัย","สุพรรณบุรี","สุราษฎร์ธานี","สุรินทร์","หนองคาย","หนองบัวลำภู","อ่างทอง","อำนาจเจริญ","อุดรธานี","อุตรดิตถ์","อุทัยธานี","อุบลราชธานี"];
+  document.getElementById("provinces").innerHTML = PROVINCES.map(p => `<option value="${p}">`).join("");
+
+  // แสดงช่อง "ระบุ" เมื่อเลือก "อื่น ๆ"
+  function bindOther(selectId, wrapId, inputId){
+    const sel=document.getElementById(selectId), wrap=document.getElementById(wrapId), inp=document.getElementById(inputId);
+    function sync(){
+      const on = sel.value==="อื่น ๆ";
+      wrap.style.display = on ? "block" : "none";
+      inp.disabled = !on; inp.required = on;
+      if(!on) inp.value="";
+    }
+    sel.addEventListener("change", sync); sync();
+  }
+  bindOther("prefix","prefixOtherWrap","prefix_other");
+  bindOther("affiliation","affiliationOtherWrap","affiliation_other");
+
+  // โหลดรายชื่อรุ่นที่เปิดรับสมัครจากระบบ (ถ้าโหลดไม่ได้ ใช้ตัวเลือกเริ่มต้น)
+  (async function(){
+    try{
+      const res=await fetch(WEBAPP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({apiAction:"getCourses"})});
+      const d=await res.json();
+      if(d&&d.ok&&d.courses&&d.courses.length){
+        const sel=document.getElementById("course_id");
+        sel.innerHTML='<option value="">— เลือก —</option>'+
+          d.courses.map(c=>`<option value="${c.course_id}">${c.label}</option>`).join("");
+      }
+    }catch(e){}
+  })();
+
+  const form = document.getElementById("regForm");
+  const btn = document.getElementById("submitBtn");
+  const spin = document.getElementById("spin");
+
+  function showErr(name, on){ const el=document.querySelector(`.err-msg[data-for="${name}"]`); if(el) el.style.display=on?"block":"none"; }
+  function fileToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); }); }
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    document.getElementById("globalErr").style.display="none";
+    ["phone","email","amount","slip","consent"].forEach(n=>showErr(n,false));
+
+    const f = new FormData(form);
+    let ok = true;
+    const phone = (f.get("phone")||"").trim();
+    const email = (f.get("email")||"").trim();
+    const amount = (f.get("amount")||"").trim();
+    const slipFile = document.getElementById("slip").files[0];
+    const consent = document.getElementById("consent").checked;
+
+    if(!/^[0-9]{9,10}$/.test(phone)){ showErr("phone",true); ok=false; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ showErr("email",true); ok=false; }
+    if(!/^[0-9]+(\.[0-9]+)?$/.test(amount)){ showErr("amount",true); ok=false; }
+    if(!slipFile || slipFile.size>MAX_FILE){ showErr("slip",true); ok=false; }
+    if(!consent){ showErr("consent",true); ok=false; }
+    if(!form.checkValidity()){ form.reportValidity(); ok=false; }
+    if(!ok) return;
+
+    btn.disabled=true; btn.textContent="กำลังส่ง..."; spin.style.display="block";
+    try{
+      const slipB64 = await fileToBase64(slipFile);
+      const prefixVal = f.get("prefix")==="อื่น ๆ" ? (f.get("prefix_other")||"").trim() : f.get("prefix");
+      const affiliationVal = f.get("affiliation")==="อื่น ๆ" ? (f.get("affiliation_other")||"").trim() : f.get("affiliation");
+      const payload = {
+        prefix:prefixVal, full_name_th:f.get("full_name_th"), full_name_en:f.get("full_name_en"),
+        position:f.get("position"), organization:f.get("organization"), affiliation:affiliationVal,
+        province:f.get("province"), phone:phone, email:email, line_name:f.get("line_name"),
+        course_id:f.get("course_id"), ai_level:f.get("ai_level"), expectation:f.get("expectation"),
+        amount:amount, payment_date:f.get("payment_date"),
+        slip:{ name:slipFile.name, mime:slipFile.type, data:slipB64 },
+        consent:true
+      };
+      const res = await fetch(WEBAPP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" }, // simple request → ไม่มี CORS preflight
+        body: JSON.stringify(

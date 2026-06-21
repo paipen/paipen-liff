@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เช็กชื่อ — PaiPen · ไปเป็น</title>
+<!-- เปิดผ่าน QR/ลิงก์: checkin.html?t=TOKEN&m=in (หรือ m=out) · แก้ WEBAPP_URL เป็น /exec -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--clay:#C2724E;--clay-d:#A65A39;
+    --sage:#6E8560;--sage-s:#E5ECDC;--line:#E7DAC1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:26px 16px}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;
+    box-shadow:0 14px 30px rgba(90,70,54,.14);max-width:440px;width:100%;padding:26px 24px;text-align:center}
+  .mode{display:inline-block;font-family:'Prompt';font-weight:600;font-size:14px;padding:6px 18px;border-radius:999px;margin-bottom:10px}
+  .m-in{background:var(--sage-s);color:#42603a}.m-out{background:#F3E1D5;color:#a5402a}
+  h1{font-family:'Prompt';font-size:21px;margin-bottom:4px}
+  .course{color:var(--soft);font-size:14px;margin-bottom:18px}
+  label{font-weight:600;font-size:14px;display:block;text-align:left;margin-bottom:6px}
+  input{width:100%;font-family:inherit;font-size:16px;padding:13px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fff;outline:none;text-align:center}
+  input:focus{border-color:var(--sage)}
+  .hint{font-size:12px;color:var(--soft);margin-top:6px}
+  button{width:100%;margin-top:16px;border:none;cursor:pointer;color:#fff;font-family:'Prompt';font-weight:600;
+    font-size:18px;padding:15px;border-radius:14px;background:var(--clay);box-shadow:0 7px 0 var(--clay-d)}
+  button:active{transform:translateY(3px);box-shadow:0 4px 0 var(--clay-d)}
+  button:disabled{opacity:.6}
+  .msg{margin-top:16px;font-size:15px;font-weight:600;display:none;padding:14px;border-radius:14px}
+  .ok{background:var(--sage-s);color:#42603a;border:1.5px solid var(--sage)}
+  .err{background:#F6E0D5;color:#a5402a;border:1.5px solid #e3a98e}
+  .big{font-size:46px}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div id="loading" class="course">กำลังโหลด...</div>
+    <div id="form" style="display:none">
+      <div class="mode" id="modeBadge"></div>
+      <h1 id="title">เช็กชื่อ</h1>
+      <div class="course" id="course"></div>
+      <label>รหัสสมัคร / เบอร์โทร / อีเมล</label>
+      <input id="q" placeholder="เช่น R01-0007 หรือ 0812345678" autocomplete="off">
+      <div class="hint">กรอกข้อมูลที่ใช้ตอนสมัคร</div>
+      <button id="btn" onclick="submit()">ยืนยันเช็กชื่อ</button>
+    </div>
+    <div class="msg" id="result"></div>
+    <div id="retry" style="display:none"><button onclick="location.reload()">เช็กชื่ออีกครั้ง</button></div>
+  </div>
+
+<script>
+  const WEBAPP_URL = "[วาง URL /exec ของ Apps Script]";
+  const params = new URLSearchParams(location.search);
+  const token = params.get('t') || '';
+  const mode = params.get('m') === 'out' ? 'out' : 'in';
+
+  function api(action, payload){
+    return fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({apiAction:action,payload:payload})}).then(r=>r.json());
+  }
+  function show(el,on){document.getElementById(el).style.display=on?'block':'none';}
+  function msg(cls,html){var m=document.getElementById('result');m.className='msg '+cls;m.innerHTML=html;m.style.display='block';}
+
+  async function init(){
+    if(!token){ show('loading',false); msg('err','ลิงก์ไม่ถูกต้อง'); return; }
+    try{
+      const d = await api('checkinInfo',{token:token,mode:mode});
+      show('loading',false);
+      if(!d.valid){ msg('err','⚠️ '+(d.reason||'ลิงก์ใช้ไม่ได้')); return; }
+      document.getElementById('modeBadge').textContent = mode==='in'?'เช็กชื่อเข้า':'เช็กชื่อออก';
+      document.getElementById('modeBadge').className = 'mode '+(mode==='in'?'m-in':'m-out');
+      document.getElementById('title').textContent = mode==='in'?'เช็กชื่อเข้าอบรม':'เช็กชื่อออก';
+      document.getElementById('course').textContent = d.course_name||'';
+      show('form',true);
+      document.getElementById('q').focus();
+    }catch(e){ show('loading',false); msg('err','เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง'); }
+  }
+  function payloadFrom(v){ v=v.trim();
+    if(v.indexOf('@')>-1) return {phone:'',email:v,token:token,mode:mode};
+    if(/^[0-9]{9,10}$/.test(v)) return {phone:v,token:token,mode:mode};
+    return {code:v,token:token,mode:mode};
+  }
+  async function submit(){
+    const v=document.getElementById('q').value.trim();
+    if(!v) return;
+    const btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='กำลังบันทึก...';
+    try{
+      const d = await api('checkin', payloadFrom(v));
+      if(d.ok){
+        show('form',false);
+        msg('ok','<div class="big">'+(d.already?'ℹ️':'✅')+'</div>'+(d.name||'')+'<br>'+d.message);
+        show('retry',false);
+      }else{
+        msg('err','⚠️ '+(d.error||'เช็กชื่อไม่สำเร็จ'));
+        btn.disabled=false; btn.textContent='ยืนยันเช็กชื่อ';
+      }
+    }catch(e){ msg('err','เชื่อมต่อไม่ได้'); btn.disabled=false; btn.textContent='ยืนยันเช็กชื่อ'; }
+  }
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('form').style.display!=='none')submit();});
+  init();
+</script

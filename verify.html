@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตรวจสอบเกียรติบัตร — PaiPen · ไปเป็น</title>
+<!-- แก้ WEBAPP_URL เป็น /exec ของ Apps Script · รองรับลิงก์ verify.html?no=AI-EDU-R01-0001 -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--clay:#C2724E;--clay-d:#A65A39;
+    --sage:#6E8560;--line:#E7DAC1;--gold:#E0A82E}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;
+    box-shadow:0 14px 30px rgba(90,70,54,.14);max-width:460px;width:100%;padding:26px 24px}
+  h1{font-family:'Prompt';font-size:22px;text-align:center;margin-bottom:4px}
+  .sub{text-align:center;color:var(--soft);font-size:14px;margin-bottom:18px}
+  label{font-weight:600;font-size:14px;display:block;margin-bottom:6px}
+  input{width:100%;font-family:inherit;font-size:15px;padding:12px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fff;outline:none}
+  input:focus{border-color:var(--sage)}
+  .hint{font-size:12px;color:var(--soft);margin-top:5px}
+  button{width:100%;margin-top:16px;border:none;cursor:pointer;color:#fff;font-family:'Prompt';font-weight:600;
+    font-size:17px;padding:14px;border-radius:14px;background:var(--clay);box-shadow:0 7px 0 var(--clay-d)}
+  button:active{transform:translateY(3px);box-shadow:0 4px 0 var(--clay-d)}
+  button:disabled{opacity:.6}
+  #result{margin-top:18px;display:none}
+  .valid{text-align:center;border:2px solid var(--sage);background:#E5ECDC;border-radius:16px;padding:18px;margin-bottom:12px}
+  .valid .ic{font-size:40px}
+  .valid b{font-family:'Prompt';color:#42603a;font-size:18px}
+  .line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+  .line span:first-child{color:var(--soft)}
+  .dl{display:inline-block;margin-top:14px;text-decoration:none;font-family:'Prompt';font-weight:600;
+    color:#fff;background:var(--sage);padding:12px 24px;border-radius:12px}
+  .notfound{text-align:center;color:#a5402a;padding:16px;font-weight:600;border:2px solid #e7c3b8;border-radius:16px}
+  .err{color:#a5402a;font-size:13px;text-align:center;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>ตรวจสอบเกียรติบัตร</h1>
+    <p class="sub">PaiPen · ไปเป็น — AI เพื่อครูมืออาชีพ</p>
+    <label>เลขที่เกียรติบัตร / เบอร์โทร / อีเมล</label>
+    <input id="q" placeholder="เช่น AI-EDU-R01-0001">
+    <div class="hint">สแกน QR บนเกียรติบัตรจะค้นหาให้อัตโนมัติ</div>
+    <button id="btn" onclick="check()">ตรวจสอบ</button>
+    <div class="err" id="err">เกิดข้อผิดพลาด ลองใหม่อีกครั้ง</div>
+
+    <div id="result">
+      <div id="valid" style="display:none">
+        <div class="valid"><div class="ic">✅</div><b>เกียรติบัตรถูกต้อง</b></div>
+        <div class="line"><span>เลขที่</span><span id="v_no"></span></div>
+        <div class="line"><span>ชื่อ</span><span id="v_name"></span></div>
+        <div class="line"><span>หลักสูตร</span><span id="v_course"></span></div>
+        <div class="line"><span>วันที่อบรม</span><span id="v_date"></span></div>
+        <div style="text-align:center"><a class="dl" id="v_dl" target="_blank">ดาวน์โหลด PDF</a></div>
+      </div>
+      <div class="notfound" id="notfound" style="display:none">ไม่พบเกียรติบัตรนี้<br>กรุณาตรวจสอบเลขที่อีกครั้ง</div>
+    </div>
+  </div>
+
+<script>
+  const WEBAPP_URL = "[วาง URL /exec ของ Apps Script]";
+  const btn=document.getElementById('btn');
+  function payloadFrom(v){
+    v=v.trim();
+    if(v.indexOf('@')>-1) return {email:v};
+    if(/^[0-9]{9,10}$/.test(v)) return {phone:v};
+    return {certificate_no:v};
+  }
+  async function check(){
+    const v=document.getElementById('q').value.trim();
+    if(!v) return;
+    document.getElementById('err').style.display='none';
+    document.getElementById('result').style.display='none';
+    btn.disabled=true; btn.textContent='กำลังตรวจสอบ...';
+    try{
+      const res=await fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({apiAction:'verifyCert',payload:payloadFrom(v)})});
+      const d=await res.json();
+      document.getElementById('result').style.display='block';
+      if(d.ok && d.status==='ถูกต้อง'){
+        document.getElementById('valid').style.display='block';
+        document.getElementById('notfound').style.display='none';
+        document.getElementById('v_no').textContent=d.certificate_no||'-';
+        document.getElementById('v_name').textContent=d.name||'-';
+        document.getElementById('v_course').textContent=d.course_name||'-';
+        document.getElementById('v_date').textContent=d.issue_date||'-';
+        const dl=document.getElementById('v_dl');
+        if(d.pdf_url){dl.style.display='inline-block';dl.href=d.pdf_url;}else{dl.style.display='none';}
+      } else {
+        document.getElementById('valid').style.display='none';
+        document.getElementById('notfound').style.display='block';
+      }
+    }catch(e){ document.getElementById('err').style.display='block'; }
+    finally{ btn.disabled=false; btn.textContent='ตรวจสอบ'; }
+  }
+  document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+  // อ่าน ?no= จาก QR แล้วค้นอัตโนมัติ
+  (function(){ const no=new URLSearchParams(location.search).get('no');
+    if(no){ document.getElementById('q').value=no; check(); } })();
+</script>
+<

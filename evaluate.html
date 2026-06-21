@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบประเมิน & ส่งชิ้นงาน — PaiPen · ไปเป็น</title>
+<!-- แก้ WEBAPP_URL เป็น /exec ของ Apps Script -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--clay:#C2724E;--clay-d:#A65A39;
+    --sage:#6E8560;--sage-s:#E5ECDC;--line:#E7DAC1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;
+    box-shadow:0 14px 30px rgba(90,70,54,.14);max-width:540px;width:100%;padding:26px 24px}
+  h1{font-family:'Prompt';font-size:22px;text-align:center;margin-bottom:4px}
+  .sub{text-align:center;color:var(--soft);font-size:14px;margin-bottom:16px}
+  label{font-weight:600;font-size:14.5px;display:block;margin-bottom:6px}
+  input[type=text],textarea{width:100%;font-family:inherit;font-size:15px;padding:12px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fff;outline:none}
+  textarea{min-height:70px;resize:vertical}
+  input:focus,textarea:focus{border-color:var(--sage)}
+  .hint{font-size:12px;color:var(--soft);margin-top:5px}
+  button{width:100%;margin-top:18px;border:none;cursor:pointer;color:#fff;font-family:'Prompt';font-weight:600;
+    font-size:18px;padding:15px;border-radius:14px;background:var(--clay);box-shadow:0 7px 0 var(--clay-d)}
+  button:active{transform:translateY(3px);box-shadow:0 4px 0 var(--clay-d)}
+  button:disabled{opacity:.6}
+  .q{margin:14px 0;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+  .q .qt{font-weight:600;font-size:14.5px;margin-bottom:8px}
+  .rate{display:flex;gap:6px}
+  .rate label{flex:1;margin:0;text-align:center;background:var(--cream);border:1.5px solid var(--line);
+    border-radius:10px;padding:9px 0;cursor:pointer;font-weight:600;font-size:15px;color:var(--soft)}
+  .rate input{display:none}
+  .rate input:checked+span{}
+  .rate label:has(input:checked){background:var(--sage);color:#fff;border-color:var(--sage)}
+  .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--soft);margin-top:4px}
+  .file-box{border:1.5px dashed var(--clay);background:#F3E1D5;border-radius:12px;padding:12px;text-align:center;margin-top:6px}
+  .msg{margin-top:16px;font-size:15px;font-weight:600;display:none;padding:14px;border-radius:14px;text-align:center}
+  .ok{background:var(--sage-s);color:#42603a;border:1.5px solid var(--sage)}
+  .err{background:#F6E0D5;color:#a5402a;border:1.5px solid #e3a98e}
+  .big{font-size:44px}
+  #ident,.scale{}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>แบบประเมิน & ส่งชิ้นงาน</h1>
+    <p class="sub">PaiPen · ไปเป็น — AI เพื่อครูมืออาชีพ</p>
+
+    <!-- ระบุตัวตน -->
+    <div id="ident">
+      <label>รหัสสมัคร / เบอร์โทร / อีเมล</label>
+      <input type="text" id="q" placeholder="เช่น R01-0007 หรือ 0812345678">
+      <div class="hint">ใช้ข้อมูลที่ใช้ตอนสมัคร</div>
+      <button id="goBtn" onclick="lookup()">ถัดไป</button>
+    </div>
+
+    <!-- แบบฟอร์ม -->
+    <div id="form" style="display:none">
+      <div class="sub" id="who" style="margin-bottom:12px"></div>
+      <div id="questions"></div>
+      <div class="q">
+        <div class="qt">ข้อเสนอแนะเพิ่มเติม</div>
+        <textarea id="suggestion" placeholder="สิ่งที่อยากให้ปรับปรุง หรือชื่นชม (ไม่บังคับ)"></textarea>
+      </div>
+      <div class="q" style="border:none">
+        <div class="qt">ส่งชิ้นงาน <span style="color:var(--clay)">*</span></div>
+        <label style="font-weight:500;font-size:13px">วางลิงก์ชิ้นงาน (Google Drive/Docs/รูป)</label>
+        <input type="text" id="link" placeholder="https://...">
+        <div class="file-box">
+          หรือแนบไฟล์ <input type="file" id="file" accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx">
+          <div class="hint">รูป/PDF/เอกสาร ไม่เกิน 15MB</div>
+        </div>
+      </div>
+      <button id="submitBtn" onclick="submit()">ส่งแบบประเมิน + ชิ้นงาน</button>
+    </div>
+
+    <div class="msg" id="result"></div>
+  </div>
+
+<script>
+  const WEBAPP_URL="[วาง URL /exec ของ Apps Script]";
+  const QS=[['content','เนื้อหาหลักสูตร'],['speaker','วิทยากร'],['materials','เอกสาร/สื่อประกอบ'],
+            ['apply','การนำไปใช้ได้จริง'],['overall','ภาพรวมความพึงพอใจ']];
+  let ident={};
+  function api(a,p){return fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({apiAction:a,payload:p})}).then(r=>r.json());}
+  function msg(c,h){var m=document.getElementById('result');m.className='msg '+c;m.innerHTML=h;m.style.display='block';}
+  function payloadFrom(v){v=v.trim();if(v.indexOf('@')>-1)return{email:v};if(/^[0-9]{9,10}$/.test(v))return{phone:v};return{code:v};}
+  function fileB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
+
+  async function lookup(){
+    const v=document.getElementById('q').value.trim(); if(!v)return;
+    ident=payloadFrom(v);
+    const b=document.getElementById('goBtn'); b.disabled=true; b.textContent='กำลังตรวจสอบ...';
+    document.getElementById('result').style.display='none';
+    try{
+      const d=await api('evalInfo',ident);
+      if(!d.found){msg('err','ไม่พบข้อมูลการสมัคร ตรวจรหัส/เบอร์อีกครั้ง');b.disabled=false;b.textContent='ถัดไป';return;}
+      if(!d.eligible){msg('err','⚠️ '+(d.reason||'ยังไม่พร้อมทำแบบประเมิน'));b.disabled=false;b.textContent='ถัดไป';return;}
+      document.getElementById('who').textContent=d.name+' · '+d.course_name+(d.submitted?' (เคยส่งแล้ว — ส่งใหม่จะทับของเดิม)':'');
+      document.getElementById('questions').innerHTML=QS.map(function(q){
+        var btns=[1,2,3,4,5].map(n=>'<label><input type="radio" name="q_'+q[0]+'" value="'+n+'"><span>'+n+'</span></label>').join('');
+        return '<div class="q"><div class="qt">'+q[1]+'</div><div class="rate">'+btns+'</div>'+
+          '<div class="scale"><span>น้อยที่สุด</span><span>มากที่สุด</span></div></div>';
+      }).join('');
+      document.getElementById('ident').style.display='none';
+      document.getElementById('form').style.display='block';
+    }catch(e){msg('err','เชื่อมต่อไม่ได้ ลองใหม่');b.disabled=false;b.textContent='ถัดไป';}
+  }
+
+  async function submit(){
+    const scores={};
+    for(const [k] of QS){const sel=document.querySelector('input[name="q_'+k+'"]:checked');if(sel)scores[k]=sel.value;}
+    if(Object.keys(scores).length<QS.length){msg('err','กรุณาให้คะแนนครบทุกข้อ');return;}
+    const link=document.getElementById('link').value.trim();
+    const file=document.getElementById('file').files[0];
+    if(!link && !file){msg('err','กรุณาส่งชิ้นงาน (วางลิงก์ หรือแนบไฟล์)');return;}
+    const b=document.getElementById('submitBtn'); b.disabled=true; b.textContent='กำลังส่ง...';
+    document.getElementById('result').style.display='none';
+    try{
+      const payload=Object.assign({},ident,{scores:scores,suggestion:document.getElementById('suggestion').value,assignment_link:link});
+      if(file){ if(file.size>15*1024*1024){msg('err','ไฟล์เกิน 15MB');b.disabled=false;b.textContent='ส่งแบบประเมิน + ชิ้นงาน';return;}
+        payload.file={name:file.name,mime:file.type,data:await fileB64(file)};}
+      const d=await api('submitEval',payload);
+      if(d.ok){document.getElementById('form').style.display='none';
+        msg('ok','<div class="big">'+(d.passed_all?'🎉':'✅')+'</div>'+(d.name||'')+'<br>'+d.message);
+      }else{msg('err','⚠️ '+(d.error||'ส่งไม่สำเร็จ'));b.disabled=false;b.textContent='ส่งแบบประเมิน + ชิ้นงาน';}
+    }catch(e){msg('err','เชื่อมต่อไม่ได้');b.disabled=false;b.textContent='ส่งแบบประเมิน + ชิ้นงาน';}
+  }
+  document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')lookup();});
+</script>
+<
