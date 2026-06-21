@@ -133,6 +133,9 @@
     }catch(e){msg('err','เชื่อมต่อไม่ได้');b.disabled=false;b.textContent='ส่งแบบประเมิน + ชิ้นงาน';}
   }
   document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')lookup();});
+
+  (function prefill(){var pr=new URLSearchParams(location.search);var v=pr.get('code')||pr.get('phone')||pr.get('email');
+    if(v){document.getElementById('q').value=v;lookup();}})();
 </script>
 </body>
 </html>
