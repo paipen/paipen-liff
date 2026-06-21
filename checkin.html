@@ -50,7 +50,7 @@
   </div>
 
 <script>
-  const WEBAPP_URL = "[วาง URL /exec ของ Apps Script]";
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwZfVMp9uXxvr34jBWQAXAJRxAeS3SJCIoXyaKzcYVx9Zoe27ae7M62w0ITIbv6k6WvOg/exec";
   const params = new URLSearchParams(location.search);
   const token = params.get('t') || '';
   const mode = params.get('m') === 'out' ? 'out' : 'in';
@@ -99,4 +99,6 @@
   }
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('form').style.display!=='none')submit();});
   init();
-</script
+</script>
+</body>
+</html>
