@@ -76,6 +76,7 @@
       document.getElementById('title').textContent = mode==='in'?'เช็กชื่อเข้าอบรม':'เช็กชื่อออก';
       document.getElementById('course').textContent = d.course_name||'';
       show('form',true);
+      var pc = params.get('code'); if(pc) document.getElementById('q').value = pc;
       document.getElementById('q').focus();
     }catch(e){ show('loading',false); msg('err','เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง'); }
   }
