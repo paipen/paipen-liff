@@ -62,8 +62,8 @@
   .scroll{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:12px}
   input,select,textarea{font-family:inherit;font-size:13.5px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff}
   .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-  button.b{border:none;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;color:#fff;font-family:inherit}
-  .ok{background:var(--sage)}.no{background:#C0603F}.pr{background:var(--clay)}.sl{background:#8a7a66}.gh{background:var(--paper);color:var(--cocoa);border:1.5px solid var(--line)}
+  button.b{border:none;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#fff;font-family:inherit;white-space:nowrap;flex:0 0 auto;line-height:1.2}
+  .ok{background:var(--sage)}.no{background:#C0603F}.pr{background:var(--clay)}.sl{background:#8a7a66}.gh{background:#fff;color:var(--cocoa);border:1.5px solid var(--clay)}
   .badge{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
   .b-ok{background:var(--sage-s);color:#42603a}.b-wait{background:var(--mustard-s);color:#8a6a12}.b-no{background:#F6E0D5;color:#a5402a}
   .muted{color:var(--soft);font-size:12.5px}.empty{text-align:center;color:#9a8a76;padding:24px}
@@ -250,7 +250,7 @@ async function certSettings(){var box=document.getElementById('ctSet');if(box.in
 }
 async function saveCertSet(){var o={};CSF.forEach(f=>o[f[0]]=document.getElementById('cs_'+f[0]).value);document.getElementById('csMsg').textContent='กำลังบันทึก...';var r=await api('saveCertSettings',o);document.getElementById('csMsg').textContent=r.ok?'บันทึกแล้ว ✓ กด "ดูตัวอย่าง" เพื่อตรวจ':('ผิดพลาด: '+r.error);}
 async function certList(){document.getElementById('ctB').innerHTML='<div class="empty">กำลังโหลด...</div>';var r=await api('certList',{course:document.getElementById('ctC').value});
-  if(!r.ok){document.getElementById('ctB').innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  if(!r.ok){document.getElementById('ctB').innerHTML='<div class="empty">ผิดพลาด: '+esc(r.error||'ไม่ทราบสาเหตุ')+'</div>';return;}
   var h='<h3 class="st">ผู้ผ่านเกณฑ์ที่ยังไม่ออก ('+r.candidates.length+')</h3>'+(r.candidates.length?'<div class="scroll"><table><tr><th>รหัส</th><th>ชื่อ</th><th></th></tr>'+r.candidates.map(x=>'<tr><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td><button class="b ok" onclick="issueOne(\''+x.code+'\')">ออก</button></td></tr>').join('')+'</table></div>':'<div class="empty">ไม่มี</div>');
   h+='<h3 class="st" style="margin-top:12px">ออกแล้ว ('+r.issued.length+')</h3>'+(r.issued.length?'<div class="scroll"><table><tr><th>เลขที่</th><th>ชื่อ</th><th>อีเมล</th><th></th></tr>'+r.issued.map(x=>'<tr><td>'+esc(x.cert_no)+'</td><td>'+esc(x.name)+'</td><td>'+(x.sent_status==='sent'?'ส่งแล้ว':esc(x.sent_status||'-'))+'</td><td>'+(x.pdf_url?'<a href="'+x.pdf_url+'" target="_blank">PDF</a> ':'')+'<button class="b sl" onclick="resendCert(\''+x.registration_id+'\')">ส่งซ้ำ</button></td></tr>').join('')+'</table></div>':'<div class="empty">ยังไม่มี</div>');
   document.getElementById('ctB').innerHTML=h;
