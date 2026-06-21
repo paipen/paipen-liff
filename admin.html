@@ -43,7 +43,8 @@
     padding:10px 12px;border-radius:10px;margin-bottom:3px;cursor:pointer}
   .nav a:hover{background:rgba(255,255,255,.08)}
   .nav a.on{background:var(--clay);color:#fff;font-weight:600}
-  .nav .ic{width:20px;text-align:center}
+  .nav .ic{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px}
+  .nav .ic svg{width:19px;height:19px;display:block}
   .main{flex:1;min-width:0;display:flex;flex-direction:column}
   .top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;
     background:var(--paper);border-bottom:1.5px solid var(--line);position:sticky;top:0;z-index:5}
@@ -116,8 +117,21 @@ let TOKEN = localStorage.getItem('pp_token') || '';
 let ROLE = localStorage.getItem('pp_role') || '';
 let NAME = localStorage.getItem('pp_name') || '';
 const ST=['สมัครแล้ว','รอตรวจสอบชำระเงิน','ยืนยันสิทธิ์','รายชื่อสำรอง','หลักฐานไม่ถูกต้อง','เข้าอบรมแล้ว','ผ่านเกณฑ์','ไม่ผ่านเกณฑ์','ยกเลิก'];
-const NAVS=[['dash','ภาพรวม','📊'],['list','ผู้สมัคร','👥'],['course','หลักสูตร','📚'],['seat','ที่นั่ง','🪑'],
-  ['check','เช็กชื่อ','📲'],['cert','เกียรติบัตร','🏅'],['notify','แจ้งเตือน','📧'],['report','รายงาน','📄'],['users','ผู้ใช้งาน','🔐']];
+const NAVS=[['dash','ภาพรวม'],['list','ผู้สมัคร'],['course','หลักสูตร'],['seat','ที่นั่ง'],
+  ['check','เช็กชื่อ'],['cert','เกียรติบัตร'],['notify','แจ้งเตือน'],['report','รายงาน'],['users','ผู้ใช้งาน']];
+const SVGW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+const ICONS={
+  dash:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
+  list:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a3 3 0 0 1 0 5.4"/><path d="M17.5 20a5.2 5.2 0 0 0-2.3-4.2"/>',
+  course:'<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12v15H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H12v15h6.5A1.5 1.5 0 0 1 20 20.5z"/>',
+  seat:'<path d="M5 11V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5V11"/><path d="M4 11h16v5H4z"/><path d="M6 16v4M18 16v4"/>',
+  check:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v2.5H9z"/><path d="M8.5 13l2.2 2.2L15 11"/>',
+  cert:'<circle cx="12" cy="9" r="5"/><path d="M8.5 13.2L7 21l5-2.8L17 21l-1.5-7.8"/>',
+  notify:'<path d="M6 9a6 6 0 0 1 12 0c0 4.5 1.8 5.8 1.8 5.8H4.2S6 13.5 6 9z"/><path d="M10 18.5a2 2 0 0 0 4 0"/>',
+  report:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+  users:'<path d="M12 3l7 2.8v5.5c0 4.2-3 7-7 8.7-4-1.7-7-4.5-7-8.7V5.8z"/><circle cx="12" cy="10.5" r="1.8"/><path d="M12 12.3V15"/>'
+};
+function ICON(id){return SVGW+(ICONS[id]||'')+'</svg>';}
 
 function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 function badge(s){var c='b-wait';if(/ยืนยัน|ผ่านเกณฑ์|ออกเกียรติ/.test(s))c='b-ok';else if(/ไม่|ยกเลิก/.test(s))c='b-no';return '<span class="badge '+c+'">'+esc(s)+'</span>';}
@@ -154,7 +168,7 @@ function startApp(){
   document.getElementById('urole').textContent=ROLE;
   const canUsers=(ROLE==='owner'||ROLE==='admin');
   document.getElementById('nav').innerHTML=NAVS.filter(n=>n[0]!=='users'||canUsers)
-    .map(n=>'<a data-s="'+n[0]+'" onclick="go(\''+n[0]+'\')"><span class="ic">'+n[2]+'</span>'+n[1]+'</a>').join('');
+    .map(n=>'<a data-s="'+n[0]+'" onclick="go(\''+n[0]+'\')"><span class="ic">'+ICON(n[0])+'</span>'+n[1]+'</a>').join('');
   go('dash');
 }
 function go(s){
@@ -273,7 +287,18 @@ async function loadNL(){var r=await api('notifications');var el=document.getElem
   el.innerHTML='<table><tr><th>เวลา</th><th>รหัส</th><th>ประเภท</th><th>สถานะ</th><th></th></tr>'+r.rows.map(n=>'<tr><td>'+esc(n.sent_at)+'</td><td>'+esc(n.registration_id)+'</td><td>'+esc(n.message_type)+'</td><td>'+(n.status==='sent'?'<span class="badge b-ok">ส่งแล้ว</span>':'<span class="badge b-no">ล้มเหลว</span>')+'</td><td>'+(n.status!=='sent'?'<button class="b sl" onclick="resendN(\''+n.notification_id+'\')">ส่งซ้ำ</button>':'')+'</td></tr>').join('')+'</table>';}
 async function resendN(id){await api('resendNotify',{id});loadNL();}
 // ---- รายงาน ----
-function rReport(){C().innerHTML='<div class="panel"><h3 class="st">ส่งออกรายงาน (CSV)</h3><p class="muted">เปิดด้วย Excel รองรับภาษาไทย</p><div style="margin-top:10px"><button class="b pr" onclick="exp(\'participants\')">รายชื่อผู้สมัคร</button> <button class="b pr" onclick="exp(\'payments\')">การชำระเงิน</button> <button class="b pr" onclick="exp(\'assessments\')">ผลประเมิน/ชิ้นงาน</button></div><div class="muted" id="rpMsg" style="margin-top:10px"></div></div>';}
+function rReport(){C().innerHTML='<div class="panel"><h3 class="st">ส่งออกรายงาน (CSV)</h3><p class="muted">เปิดด้วย Excel รองรับภาษาไทย</p><div style="margin-top:10px"><button class="b pr" onclick="exp(\'participants\')">รายชื่อผู้สมัคร</button> <button class="b pr" onclick="exp(\'payments\')">การชำระเงิน</button> <button class="b pr" onclick="exp(\'assessments\')">ผลประเมิน/ชิ้นงาน</button></div><div class="muted" id="rpMsg" style="margin-top:10px"></div></div>'+
+    '<div class="panel"><div class="bar"><h3 class="st" style="margin:0">สำรองข้อมูล</h3><button class="b ok" onclick="backupNow()">สำรองทันที</button><span class="muted" id="bkMsg"></span></div><div id="bkB"><div class="empty">กำลังโหลด...</div></div></div>';
+  loadBackup();}
+async function loadBackup(){var r=await api('backupStatus');var el=document.getElementById('bkB');if(!r.ok){el.innerHTML='<div class="empty">'+esc(r.error||'ผิดพลาด')+'</div>';return;}
+  var h='<div class="kpis" style="margin-bottom:12px"><div class="kpi"><b style="font-size:18px">'+(r.scheduled?'เปิดอยู่':'ยังไม่เปิด')+'</b><span>สำรองอัตโนมัติรายสัปดาห์</span></div>'+
+    '<div class="kpi"><b style="font-size:18px">'+esc(r.last||'-')+'</b><span>สำรองล่าสุด</span></div>'+
+    '<div class="kpi"><b style="font-size:18px">'+esc(r.keep)+' ชุด</b><span>เก็บย้อนหลัง</span></div></div>';
+  if(!r.scheduled)h+='<div class="note-warn" style="background:var(--mustard-s,#F8EBC8);border:1.5px solid #D9A227;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#8a6a12">ยังไม่ได้เปิดสำรองอัตโนมัติ — ใน Apps Script เปิดไฟล์ Backup.gs เลือกฟังก์ชัน <b>setupWeeklyBackup</b> แล้วกด Run หนึ่งครั้ง (ตั้งทำงานทุกวันจันทร์ 02:00 น.)</div>';
+  if(r.folder_url)h+='<p style="margin-bottom:10px"><a href="'+r.folder_url+'" target="_blank">เปิดโฟลเดอร์สำรองทั้งหมด →</a></p>';
+  h+=r.backups.length?'<div class="scroll"><table><tr><th>ไฟล์สำรอง</th><th>วันที่</th><th></th></tr>'+r.backups.map(b=>'<tr><td>'+esc(b.name)+'</td><td>'+esc(b.date)+'</td><td><a href="'+b.url+'" target="_blank">เปิด</a></td></tr>').join('')+'</table></div>':'<div class="empty">ยังไม่มีไฟล์สำรอง</div>';
+  el.innerHTML=h;}
+async function backupNow(){document.getElementById('bkMsg').textContent='กำลังสำรอง... (อาจใช้เวลาสักครู่)';var r=await api('backupNow');document.getElementById('bkMsg').textContent=r.ok?('สำรองแล้ว: '+r.name):('ผิดพลาด: '+r.error);loadBackup();}
 async function exp(which){document.getElementById('rpMsg').textContent='กำลังสร้าง...';var r=await api('export',{which});if(!r.ok){document.getElementById('rpMsg').textContent='ผิดพลาด';return;}
   var blob=new Blob([r.csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();document.getElementById('rpMsg').textContent='ดาวน์โหลด '+r.filename+' แล้ว';}
 // ---- ผู้ใช้งาน ----
