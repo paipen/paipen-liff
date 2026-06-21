@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>ห้องอบรม — PaiPen · ไปเป็น</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--clay:#C2724E;--clay-d:#A65A39;
+    --sage:#6E8560;--sage-s:#E5ECDC;--mustard:#D9A227;--mustard-s:#F8EBC8;--line:#E7DAC1;--cocoa:#5A4636}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
+  .wrap{max-width:460px;width:100%}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:20px;
+    box-shadow:0 12px 26px rgba(90,70,54,.12);padding:24px 22px;margin-bottom:14px}
+  h1{font-family:'Prompt';font-size:23px;color:var(--cocoa);text-align:center}
+  .sub{color:var(--soft);font-size:14px;text-align:center;margin-bottom:16px}
+  label{display:block;font-weight:600;font-size:14px;margin:10px 0 5px}
+  input{width:100%;font-family:inherit;font-size:15px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;outline:none}
+  input:focus{border-color:var(--sage)}
+  .btn{width:100%;margin-top:16px;border:none;cursor:pointer;color:#fff;font-family:'Prompt';font-weight:600;
+    font-size:17px;padding:13px;border-radius:13px;background:var(--clay);box-shadow:0 5px 0 var(--clay-d)}
+  .btn:active{transform:translateY(2px);box-shadow:0 3px 0 var(--clay-d)}
+  .msg{font-size:13.5px;text-align:center;margin-top:10px;min-height:16px}
+  .err{color:#c0392b}
+  .crs{border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;background:var(--paper)}
+  .crs h3{font-family:'Prompt';font-size:17px;color:var(--cocoa);margin-bottom:3px}
+  .meta{font-size:13px;color:var(--soft);margin-bottom:10px}
+  .badge{display:inline-block;font-family:'Prompt';font-size:12px;font-weight:600;padding:3px 11px;border-radius:999px;margin-bottom:10px}
+  .b-ok{background:var(--sage-s);color:#42603a}.b-wait{background:var(--mustard-s);color:#8a6a12}.b-no{background:#F6E0D5;color:#a5402a}
+  .acts{display:flex;flex-wrap:wrap;gap:8px}
+  .acts a{flex:1 1 46%;text-align:center;text-decoration:none;font-family:'Prompt';font-weight:600;font-size:14px;
+    padding:11px 8px;border-radius:11px}
+  .a-join{background:var(--clay);color:#fff}.a-doc{background:var(--sage);color:#fff}
+  .a-check{background:var(--mustard);color:#5a4410}.a-eval{background:#fff;color:var(--cocoa);border:1.5px solid var(--clay)}
+  .a-cert{background:var(--cocoa);color:#fff;flex-basis:100%}
+  .a-check.off{background:#cfc2ad;color:#fff}
+  .ckmsg{font-size:13.5px;font-weight:600;margin-top:8px;padding:0}
+  .ckmsg.ck-ok{color:#42603a}.ckmsg.ck-warn{color:#8a6a12}.ckmsg.ck-err{color:#a5402a}
+  .lock{background:var(--mustard-s);border:1.5px solid var(--mustard);border-radius:12px;padding:11px 13px;font-size:13.5px;color:#7a5a12}
+  .lock a{color:var(--clay-d)}
+  .who{text-align:center;font-family:'Prompt';font-weight:600;color:var(--cocoa);margin-bottom:12px}
+  .back{display:block;text-align:center;font-size:13px;color:var(--soft);margin-top:6px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="findCard">
+    <h1>ห้องอบรม</h1>
+    <p class="sub">PaiPen · ไปเป็น — เข้าถึงลิงก์ห้องเรียน เอกสาร และกิจกรรมของคุณ</p>
+    <label>รหัสสมัคร / เบอร์โทร / อีเมล</label>
+    <input id="q" placeholder="เช่น R01-0007 หรือ 0641978945">
+    <button class="btn" id="go" onclick="find()">เข้าห้องอบรม</button>
+    <div class="msg" id="msg"></div>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script>
+const WEBAPP_URL="https://script.google.com/macros/s/AKfycbwZfVMp9uXxvr34jBWQAXAJRxAeS3SJCIoXyaKzcYVx9Zoe27ae7M62w0ITIbv6k6WvOg/exec";
+function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function badge(s){var c='b-wait';if(/ยืนยัน|ผ่านเกณฑ์|เข้าอบรม|ออกเกียรติ/.test(s))c='b-ok';else if(/ไม่|ยกเลิก|สำรอง/.test(s))c='b-no';return '<span class="badge '+c+'">'+esc(s)+'</span>';}
+
+async function find(){
+  var q=document.getElementById('q').value.trim();
+  if(!q){document.getElementById('msg').innerHTML='<span class="err">กรุณากรอกข้อมูล</span>';return;}
+  var b=document.getElementById('go');b.disabled=true;b.textContent='กำลังค้นหา...';document.getElementById('msg').textContent='';
+  var payload={};
+  if(/@/.test(q))payload.email=q; else if(/^[A-Za-z]/.test(q))payload.code=q; else payload.phone=q;
+  try{
+    var res=await fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({apiAction:'getClassroom',payload})});
+    var d=await res.json();
+    if(!d.found){document.getElementById('msg').innerHTML='<span class="err">ไม่พบข้อมูลการสมัคร ตรวจรหัส/เบอร์/อีเมลอีกครั้ง</span>';return;}
+    render(d);
+  }catch(e){document.getElementById('msg').innerHTML='<span class="err">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</span>';}
+  finally{b.disabled=false;b.textContent='เข้าห้องอบรม';}
+}
+
+function render(d){
+  document.getElementById('findCard').style.display='none';
+  var h='<div class="card"><div class="who">สวัสดี '+esc(d.name)+'</div>';
+  if(!d.courses.length)h+='<div class="lock">ยังไม่มีหลักสูตรที่สมัคร</div>';
+  d.courses.forEach(function(c){
+    h+='<div class="crs"><h3>'+esc(c.course_name)+'</h3>';
+    var meta=[];if(c.batch_no)meta.push('รุ่น '+esc(c.batch_no));if(c.start_date)meta.push(esc(c.start_date));if(c.format)meta.push(esc(c.format));if(c.instructor)meta.push('วิทยากร: '+esc(c.instructor));
+    h+='<div class="meta">'+meta.join(' · ')+'</div>'+badge(c.reg_status);
+    if(c.unlocked){
+      h+='<div class="acts">';
+      if(c.meeting_url)h+='<a class="a-join" href="'+esc(c.meeting_url)+'" target="_blank">เข้าห้องเรียน</a>';
+      if(c.material_url)h+='<a class="a-doc" href="'+esc(c.material_url)+'" target="_blank">เอกสารประกอบ</a>';
+      if(c.line_checkin)h+='<a class="a-check" onclick="lineCheck(this,\''+esc(c.code)+'\',\''+esc(c.course_id)+'\')">เช็กชื่อ'+(c.line_checkin==='out'?'ออก':'เข้า')+'</a>';
+      else h+='<a class="a-check off" onclick="alert(\'ขณะนี้ยังไม่เปิดเช็กชื่อผ่าน LINE — กรุณาเช็กชื่อผ่าน QR ที่วิทยากรแสดงในห้อง หรือรอแอดมินเปิดใช้งาน\')">เช็กชื่อ</a>';
+      h+='<a class="a-eval" href="evaluate.html?code='+encodeURIComponent(c.code)+'">แบบประเมิน/ส่งงาน</a>';
+      if(c.cert_pdf)h+='<a class="a-cert" href="'+esc(c.cert_pdf)+'" target="_blank">ดาวน์โหลดเกียรติบัตร</a>';
+      h+='</div><div class="ckmsg" id="ck_'+esc(c.code)+'"></div>';
+      if(!c.meeting_url)h+='<div class="meta" style="margin-top:8px">* ยังไม่มีลิงก์ห้องเรียน เจ้าหน้าที่จะแจ้งให้ทราบก่อนวันอบรม</div>';
+    } else {
+      h+='<div class="lock">ยังไม่ยืนยันสิทธิ์ — รอเจ้าหน้าที่ตรวจสอบการชำระเงิน <a href="status.html">ดูสถานะ</a></div>';
+    }
+    h+='</div>';
+  });
+  h+='<span class="back" onclick="location.reload()">← ค้นหาด้วยข้อมูลอื่น</span></div>';
+  document.getElementById('result').innerHTML=h;
+}
+async function lineCheck(el,code,course){
+  el.style.pointerEvents='none';var old=el.textContent;el.textContent='กำลังเช็กชื่อ...';
+  var box=document.getElementById('ck_'+code);
+  try{
+    var res=await fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({apiAction:'lineCheckin',payload:{code:code,course:course}})});
+    var d=await res.json();
+    if(d.ok){box.className='ckmsg '+(d.already?'ck-warn':'ck-ok');box.textContent=(d.already?'ℹ️ ':'✅ ')+(d.message||'สำเร็จ');}
+    else{box.className='ckmsg ck-err';box.textContent='⚠️ '+(d.error||'เช็กชื่อไม่สำเร็จ');}
+  }catch(e){box.className='ckmsg ck-err';box.textContent='เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง';}
+  finally{el.style.pointerEvents='';el.textContent=old;}
+}
+document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')find();});
+</script>
+</body>
+</html>
