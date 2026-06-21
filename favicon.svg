@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C2724E"/>
+      <stop offset="1" stop-color="#A65A39"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="none" stroke="#FAF3E7" stroke-opacity="0.25" stroke-width="1.5"/>
+  <!-- pen nib -->
+  <path d="M22 15 H42 V29 C42 41 37.5 49 32 53 C26.5 49 22 41 22 29 Z" fill="#FAF3E7"/>
+  <line x1="32" y1="22" x2="32" y2="46" stroke="#A65A39" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="32" cy="23.5" r="3.1" fill="#A65A39"/>
+  <!-- sage spark (learning) -->
+  <circle cx="46.5" cy="16.5" r="4" fill="#8CA17B"/>
+</svg>
