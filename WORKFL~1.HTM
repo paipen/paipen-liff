@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PaiPen · ไปเป็น — Workflow ทั้งระบบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#4A3A2C;--soft:#7C6B58;--line:#E7DAC1;--cocoa:#5A4636;
+    --clay:#C2724E;--clay-d:#A65A39;--clay-s:#F3E1D5;--sage:#6E8560;--sage-s:#E5ECDC;
+    --mustard:#D9A227;--mustard-s:#F8EBC8;--kraft-s:#F0E4CC;--plum:#7B6CA8;--plum-s:#E7E2F2}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    background-image:radial-gradient(circle at 8% 3%,var(--sage-s) 0,transparent 18%),radial-gradient(circle at 93% 5%,var(--mustard-s) 0,transparent 16%);
+    line-height:1.5;padding:24px 16px 50px}
+  h1,h2,h3,.pf{font-family:'Prompt',sans-serif}
+  .page{max-width:1080px;margin:0 auto}
+  .card{background:var(--paper);border:1.5px solid var(--line);border-radius:20px;box-shadow:0 12px 28px rgba(90,70,54,.12)}
+  .hero{padding:26px 30px;text-align:center}
+  .hero .lg{font-family:'Prompt';font-weight:700;font-size:30px;color:var(--cocoa)}
+  .hero h1{font-size:22px;color:var(--cocoa);margin-top:4px}
+  .hero p{color:var(--soft);font-size:14.5px;margin-top:5px}
+  section{margin-top:20px;padding:24px 26px}
+  .stitle{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .stitle .n{width:32px;height:32px;border-radius:9px;background:var(--clay);color:#fff;display:grid;place-items:center;font-family:'Prompt';font-weight:700;font-size:15px;flex:0 0 32px}
+  .stitle h2{font-size:19px;color:var(--cocoa)}
+  .stitle span{color:var(--soft);font-size:13px}
+  /* channels */
+  .chan{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+  @media(max-width:760px){.chan{grid-template-columns:1fr}}
+  .ch{border:1.5px solid var(--line);border-radius:16px;padding:16px}
+  .ch .e{font-size:24px}.ch b{font-family:'Prompt';font-size:15.5px;display:block;margin:5px 0 4px;color:var(--cocoa)}
+  .ch p{font-size:12.8px;color:var(--soft)}
+  .c1{background:var(--sage-s)}.c2{background:var(--clay-s)}.c3{background:var(--plum-s)}
+  /* journey */
+  .flow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .step{text-align:center;position:relative}
+  .step .ico{width:58px;height:58px;margin:0 auto 7px;border-radius:16px;display:grid;place-items:center;font-size:26px;border:1.5px solid var(--line)}
+  .step .num{position:absolute;top:-5px;left:50%;transform:translateX(16px);width:21px;height:21px;border-radius:50%;background:var(--cocoa);color:#fff;font-family:'Prompt';font-weight:700;font-size:11px;display:grid;place-items:center}
+  .step b{font-family:'Prompt';font-weight:600;font-size:13px;display:block;color:var(--ink)}
+  .step small{color:var(--soft);font-size:11px;display:block;line-height:1.3;margin-top:2px}
+  .step:not(:last-child)::after{content:"→";position:absolute;top:22px;right:-9px;color:var(--clay);font-size:17px;font-weight:700}
+  .i1{background:var(--clay-s)}.i2{background:var(--mustard-s)}.i3{background:var(--sage-s)}.i4{background:var(--plum-s)}.i5{background:var(--kraft-s)}.i6{background:var(--sage-s)}.i7{background:var(--clay-s)}
+  @media(max-width:760px){.flow{grid-template-columns:repeat(2,1fr);gap:16px}.step::after{display:none}}
+  /* admin actions */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .mod{border:1.5px solid var(--line);border-radius:14px;padding:14px 15px}
+  .mod b{font-family:'Prompt';font-weight:600;font-size:14.5px;display:block;color:var(--cocoa);margin-bottom:3px}
+  .mod p{font-size:12.6px;color:var(--soft)}
+  .m1{background:var(--clay-s)}.m2{background:var(--sage-s)}.m3{background:var(--mustard-s)}.m4{background:var(--plum-s)}.m5{background:var(--kraft-s)}.m6{background:var(--sage-s)}.m7{background:var(--clay-s)}.m8{background:var(--mustard-s)}.m9{background:var(--plum-s)}
+  /* architecture */
+  .arch{display:flex;align-items:stretch;gap:12px;flex-wrap:wrap}
+  .layer{flex:1;min-width:200px;border:1.5px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--cream)}
+  .layer .t{font-family:'Prompt';font-weight:600;color:var(--cocoa);font-size:14.5px;margin-bottom:6px}
+  .layer .items{font-size:12.6px;color:var(--soft);line-height:1.65}
+  .arrow{display:flex;align-items:center;font-size:22px;color:var(--clay);font-weight:700}
+  @media(max-width:760px){.arrow{transform:rotate(90deg);justify-content:center;width:100%}}
+  /* pass rule */
+  .rule{display:flex;flex-wrap:wrap;gap:12px}
+  .rule .b{flex:1;min-width:200px;background:var(--sage-s);border:1.5px solid var(--sage);border-radius:14px;padding:14px 16px}
+  .rule .b b{font-family:'Prompt';color:#3f5d38;font-size:15px}
+  .foot{text-align:center;color:#efe6d8;font-size:13px;margin-top:22px;padding:20px;background:var(--cocoa);border-radius:18px}
+  .foot b{font-family:'Prompt';font-size:16px;color:#fff}
+  @media print{body{background:#fff;padding:0}.card{box-shadow:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="card hero">
+    <div class="lg">PaiPen · ไปเป็น</div>
+    <h1>ระบบบริหารการอบรมออนไลน์ครบวงจร — Workflow ทั้งระบบ</h1>
+    <p>LINE OA + Google Apps Script + เว็บ (GitHub Pages) · ตั้งแต่ "สมัคร" จนถึง "เกียรติบัตร" จบในระบบเดียว</p>
+  </div>
+
+  <!-- CHANNELS -->
+  <section class="card">
+    <div class="stitle"><div class="n">1</div><div><h2>ช่องทางการใช้งาน 3 ส่วน</h2><span>ผู้เรียน · เจ้าหน้าที่ · ระบบเบื้องหลัง</span></div></div>
+    <div class="chan">
+      <div class="ch c1"><div class="e">📱</div><b>ผู้เรียน (LINE + เว็บ)</b><p>เมนู LINE 6 ปุ่ม: สมัคร · หลักสูตร · ชำระเงิน · สถานะ · ห้องอบรม · เกียรติบัตร</p></div>
+      <div class="ch c2"><div class="e">🧑‍💼</div><b>เจ้าหน้าที่ (เว็บหลังบ้าน)</b><p>admin.html — ล็อกอิน 3 บทบาท จัดการทุกขั้นตอนผ่าน 9 แท็บ</p></div>
+      <div class="ch c3"><div class="e">⚙️</div><b>ระบบเบื้องหลัง</b><p>Google Sheet (ฐานข้อมูล 12 ตาราง) + Apps Script + Drive (สลิป/เกียรติบัตร/ชิ้นงาน/สำรอง)</p></div>
+    </div>
+  </section>
+
+  <!-- JOURNEY -->
+  <section class="card">
+    <div class="stitle"><div class="n">2</div><div><h2>เส้นทางผู้เรียน 7 ขั้น</h2><span>อัตโนมัติเชื่อมต่อกันทั้งหมด</span></div></div>
+    <div class="flow">
+      <div class="step"><span class="num">1</span><div class="ico i1">📝</div><b>สมัคร</b><small>ฟอร์มผ่านเว็บ/LINE</small></div>
+      <div class="step"><span class="num">2</span><div class="ico i2">💳</div><b>ชำระเงิน</b><small>โอน + แนบสลิป</small></div>
+      <div class="step"><span class="num">3</span><div class="ico i3">✅</div><b>ยืนยันสิทธิ์</b><small>ตรวจสลิป จัดที่นั่ง</small></div>
+      <div class="step"><span class="num">4</span><div class="ico i4">💻</div><b>เข้าอบรม</b><small>เช็กชื่อ QR/LINE เข้า-ออก</small></div>
+      <div class="step"><span class="num">5</span><div class="ico i5">📋</div><b>ประเมิน</b><small>แบบประเมิน + ส่งชิ้นงาน</small></div>
+      <div class="step"><span class="num">6</span><div class="ico i6">🎯</div><b>ผ่านเกณฑ์</b><small>คำนวณอัตโนมัติ</small></div>
+      <div class="step"><span class="num">7</span><div class="ico i7">🏅</div><b>เกียรติบัตร</b><small>PDF + QR + อีเมล</small></div>
+    </div>
+  </section>
+
+  <!-- ADMIN ACTIONS -->
+  <section class="card">
+    <div class="stitle"><div class="n">3</div><div><h2>งานของเจ้าหน้าที่ (เว็บหลังบ้าน 9 แท็บ)</h2><span>admin.html</span></div></div>
+    <div class="grid">
+      <div class="mod m1"><b>ภาพรวม</b><p>สรุปผู้สมัคร/ชำระ/รายได้/ที่นั่ง รายหลักสูตร</p></div>
+      <div class="mod m2"><b>ผู้สมัคร</b><p>ค้นหา · ดูสลิป · อนุมัติ/ไม่อนุมัติ · เปลี่ยนสถานะ</p></div>
+      <div class="mod m3"><b>หลักสูตร</b><p>เพิ่ม/แก้รุ่น · ที่นั่ง · ราคา · ลิงก์ห้อง/เอกสาร</p></div>
+      <div class="mod m4"><b>ที่นั่ง</b><p>ดูที่นั่งเหลือ · เลื่อนรายชื่อสำรองอัตโนมัติ</p></div>
+      <div class="mod m5"><b>เช็กชื่อ</b><p>สร้าง QR เข้า/ออก · เปิดเช็กชื่อผ่าน LINE (หมดเวลาอัตโนมัติ)</p></div>
+      <div class="mod m6"><b>เกียรติบัตร</b><p>แก้รูปแบบ/ข้อความ · ออกทีละคน/ทั้งรุ่น · ส่งซ้ำ</p></div>
+      <div class="mod m7"><b>แจ้งเตือน</b><p>ส่งอีเมลเป็นชุด · ดูประวัติ · ส่งซ้ำ</p></div>
+      <div class="mod m8"><b>รายงาน</b><p>ส่งออก CSV · สำรองข้อมูลทันที/รายสัปดาห์</p></div>
+      <div class="mod m9"><b>ผู้ใช้งาน</b><p>เพิ่ม/แก้บัญชี · กำหนดบทบาท · เปิด-ปิดการใช้งาน</p></div>
+    </div>
+  </section>
+
+  <!-- PASS RULE -->
+  <section class="card">
+    <div class="stitle"><div class="n">4</div><div><h2>เกณฑ์ผ่าน → ออกเกียรติบัตรอัตโนมัติ</h2><span>คำนวณโดยระบบ</span></div></div>
+    <div class="rule">
+      <div class="b"><b>① เข้าร่วม ≥ 80%</b><br><span style="font-size:13px;color:#42603a">จากเวลาเช็กชื่อเข้า–ออก เทียบเวลาอบรมเต็ม</span></div>
+      <div class="b"><b>② ส่งชิ้นงาน</b><br><span style="font-size:13px;color:#42603a">ลิงก์งานหรือแนบไฟล์ผ่านหน้าแบบประเมิน</span></div>
+      <div class="b"><b>③ ออกเกียรติบัตร</b><br><span style="font-size:13px;color:#42603a">PDF + QR ตรวจสอบได้ ส่งเข้าอีเมลอัตโนมัติ</span></div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="card">
+    <div class="stitle"><div class="n">5</div><div><h2>สถาปัตยกรรมระบบ</h2><span>ต้นทุนต่ำ ขยายต่อได้</span></div></div>
+    <div class="arch">
+      <div class="layer"><div class="t">หน้าบ้าน</div><div class="items">LINE OA (Rich Menu)<br>เว็บ GitHub Pages<br>(สมัคร/สถานะ/ห้องอบรม/เช็กชื่อ/ประเมิน/เกียรติบัตร)</div></div>
+      <div class="arrow">→</div>
+      <div class="layer"><div class="t">ตัวกลาง/ลอจิก</div><div class="items">Google Apps Script<br>Web App API (/exec)<br>ล็อกอิน token + 3 บทบาท</div></div>
+      <div class="arrow">→</div>
+      <div class="layer"><div class="t">ข้อมูล/จัดเก็บ</div><div class="items">Google Sheet 12 ตาราง<br>Drive: สลิป/เกียรติบัตร/ชิ้นงาน<br>สำรองอัตโนมัติทุกสัปดาห์</div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>PaiPen · ไปเป็น</b><br>
+    เรียน AI แล้วใช้เป็นจริง — ระบบบริหารการอบรมออนไลน์ครบวงจร<br>
+    ผศ.ดร.ไพศาล ดาแร่ (Dr.PPai) · LINE @285qytpp · โทร. 06 4197 8945
+  </div>
+</div>
+</body>
+</html>
