@@ -192,7 +192,7 @@
 
 <script>
   // ====== ตั้งค่า ======
-  const WEBAPP_URL = "[วาง URL /exec ของ Apps Script ที่ deploy แล้ว]";
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwZfVMp9uXxvr34jBWQAXAJRxAeS3SJCIoXyaKzcYVx9Zoe27ae7M62w0ITIbv6k6WvOg/exec";
   const MAX_FILE = 8 * 1024 * 1024; // 8MB
 
   // เติมรายชื่อจังหวัด
@@ -272,4 +272,21 @@
       const res = await fetch(WEBAPP_URL, {
         method:"POST",
         headers:{ "Content-Type":"text/plain;charset=utf-8" }, // simple request → ไม่มี CORS preflight
-        body: JSON.stringify(
+        body: JSON.stringify({ apiAction:"register", payload })
+      });
+      const data = await res.json();
+      if(data && data.ok){
+        document.getElementById("formCard").style.display="none";
+        document.getElementById("regCode").textContent = data.code || "-";
+        document.getElementById("done").style.display="block";
+        window.scrollTo({top:0,behavior:"smooth"});
+      } else { throw new Error((data&&data.error)||"failed"); }
+    }catch(err){
+      document.getElementById("globalErr").style.display="block";
+    }finally{
+      btn.disabled=false; btn.textContent="ส่งใบสมัคร"; spin.style.display="none";
+    }
+  });
+</script>
+</body>
+</html>
