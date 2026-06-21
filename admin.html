@@ -236,9 +236,19 @@ async function loadTok(){var r=await api('tokens');var el=document.getElementByI
 async function delTok(id){await api('deactivateToken',{token_id:id});loadTok();}
 // ---- เกียรติบัตร ----
 async function rCert(){var s=await api('seats');var opts='<option value="">ทุกหลักสูตร</option>'+(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+'</option>').join('');
-  C().innerHTML='<div class="panel"><div class="bar"><select id="ctC" onchange="certList()">'+opts+'</select><button class="b gh" onclick="prevCert()">ดูตัวอย่างดีไซน์</button><button class="b pr" onclick="issueAll()">ออกทั้งรุ่น</button><span class="muted" id="ctMsg"></span></div><div id="ctB"></div></div>';
+  C().innerHTML='<div class="panel"><div class="bar"><select id="ctC" onchange="certList()">'+opts+'</select><button class="b sl" onclick="certSettings()">ตั้งค่ารูปแบบ/ข้อความ</button><button class="b gh" onclick="prevCert()">ดูตัวอย่างดีไซน์</button><button class="b pr" onclick="issueAll()">ออกทั้งรุ่น</button><span class="muted" id="ctMsg"></span></div><div id="ctSet"></div><div id="ctB"></div></div>';
   certList();
 }
+const CSF=[['cert_title','หัวเรื่อง','t'],['cert_subtitle','หัวเรื่องรอง (อังกฤษ)','t'],['cert_intro','ข้อความก่อนชื่อผู้รับ','t'],['cert_body','ข้อความก่อนชื่อหลักสูตร','t'],['cert_date_prefix','คำนำหน้าวันที่','t'],['cert_signer_name','ชื่อผู้ลงนาม (เว้นว่าง=ใช้ชื่อวิทยากร)','t'],['cert_signer_title','ตำแหน่งผู้ลงนาม','t'],['cert_prefix','คำนำหน้าเลขเกียรติบัตร','t'],['cert_color_primary','สีกรอบนอก+ชื่อผู้รับ','c'],['cert_color_secondary','สีกรอบใน+เส้น','c'],['cert_color_heading','สีหัวเรื่อง+ชื่อหลักสูตร','c']];
+async function certSettings(){var box=document.getElementById('ctSet');if(box.innerHTML){box.innerHTML='';return;}
+  box.innerHTML='<div class="empty">กำลังโหลด...</div>';var r=await api('certSettings');if(!r.ok){box.innerHTML='<div class="empty">'+esc(r.error||'ผิดพลาด')+'</div>';return;}var s=r.settings;
+  var h='<div style="background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:16px;margin:12px 0"><h3 class="st">รูปแบบ/ข้อความเกียรติบัตร</h3><div class="grid2">'+
+    CSF.map(f=>'<label style="font-size:12px;font-weight:600;display:block">'+f[1]+(f[2]==='c'?'<br><input type="color" id="cs_'+f[0]+'" value="'+esc(s[f[0]]||'#000000')+'" style="width:60px;height:34px;padding:2px;margin-top:3px">':'<input id="cs_'+f[0]+'" value="'+esc(s[f[0]]||'')+'" style="width:100%;margin-top:3px">')+'</label>').join('')+
+    '</div><div style="margin-top:12px"><button class="b ok" onclick="saveCertSet()">บันทึก</button> <button class="b gh" onclick="prevCert()">บันทึกแล้วดูตัวอย่าง →</button> <span class="muted" id="csMsg"></span></div>'+
+    '<p class="muted" style="margin-top:8px">* ชื่อผู้รับ ชื่อหลักสูตร วันที่ และ QR เลขที่ ถูกเติมอัตโนมัติ ไม่ต้องกรอก</p></div>';
+  box.innerHTML=h;
+}
+async function saveCertSet(){var o={};CSF.forEach(f=>o[f[0]]=document.getElementById('cs_'+f[0]).value);document.getElementById('csMsg').textContent='กำลังบันทึก...';var r=await api('saveCertSettings',o);document.getElementById('csMsg').textContent=r.ok?'บันทึกแล้ว ✓ กด "ดูตัวอย่าง" เพื่อตรวจ':('ผิดพลาด: '+r.error);}
 async function certList(){document.getElementById('ctB').innerHTML='<div class="empty">กำลังโหลด...</div>';var r=await api('certList',{course:document.getElementById('ctC').value});
   if(!r.ok){document.getElementById('ctB').innerHTML='<div class="empty">ผิดพลาด</div>';return;}
   var h='<h3 class="st">ผู้ผ่านเกณฑ์ที่ยังไม่ออก ('+r.candidates.length+')</h3>'+(r.candidates.length?'<div class="scroll"><table><tr><th>รหัส</th><th>ชื่อ</th><th></th></tr>'+r.candidates.map(x=>'<tr><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td><button class="b ok" onclick="issueOne(\''+x.code+'\')">ออก</button></td></tr>').join('')+'</table></div>':'<div class="empty">ไม่มี</div>');
