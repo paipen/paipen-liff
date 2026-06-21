@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaiPen หลังบ้าน — ระบบบริหารการอบรม</title>
+<!-- แก้ WEBAPP_URL เป็น /exec ของ Apps Script · สร้างผู้ดูแลคนแรกด้วยฟังก์ชัน createFirstAdmin ใน Apps Script -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#3a3027;--soft:#7C6B58;--line:#E7DAC1;
+    --clay:#C2724E;--clay-d:#A65A39;--clay-s:#F3E1D5;--sage:#6E8560;--sage-s:#E5ECDC;
+    --mustard:#D9A227;--mustard-s:#F8EBC8;--plum:#7B6CA8;--plum-s:#E7E2F2;--cocoa:#5A4636}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;color:var(--ink);background:var(--cream)}
+  h1,h2,h3,.pf{font-family:'Prompt',sans-serif}
+  a{color:var(--clay-d)}
+  /* login */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:radial-gradient(circle at 20% 10%,var(--sage-s) 0,transparent 30%),
+    radial-gradient(circle at 90% 90%,var(--mustard-s) 0,transparent 30%),var(--cream)}
+  .lcard{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;
+    box-shadow:0 20px 50px rgba(90,70,54,.18);max-width:380px;width:100%;padding:30px 26px;text-align:center}
+  .lcard .brand{font-family:'Prompt';font-weight:700;font-size:26px;color:var(--cocoa)}
+  .lcard .sub{color:var(--soft);font-size:13.5px;margin:4px 0 18px}
+  .lcard label{display:block;text-align:left;font-weight:600;font-size:13.5px;margin:10px 0 4px}
+  .lcard input{width:100%;font-family:inherit;font-size:15px;padding:12px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fff;outline:none}
+  .lcard input:focus{border-color:var(--sage)}
+  .lcard button{width:100%;margin-top:18px;border:none;cursor:pointer;color:#fff;font-family:'Prompt';
+    font-weight:600;font-size:17px;padding:13px;border-radius:13px;background:var(--clay);box-shadow:0 6px 0 var(--clay-d)}
+  .lcard button:active{transform:translateY(3px);box-shadow:0 3px 0 var(--clay-d)}
+  .lerr{color:#c0392b;font-size:13px;margin-top:10px;min-height:16px}
+  /* app shell */
+  #app{display:none;min-height:100vh}
+  .shell{display:flex;min-height:100vh}
+  .side{width:228px;background:var(--cocoa);color:#efe6d8;flex:0 0 228px;padding:16px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+  .side .logo{font-family:'Prompt';font-weight:700;font-size:19px;color:#fff;padding:6px 10px 14px}
+  .side .logo small{display:block;font-weight:500;font-size:11.5px;color:#cdbba6}
+  .nav a{display:flex;align-items:center;gap:10px;color:#e6dccd;text-decoration:none;font-size:14.5px;
+    padding:10px 12px;border-radius:10px;margin-bottom:3px;cursor:pointer}
+  .nav a:hover{background:rgba(255,255,255,.08)}
+  .nav a.on{background:var(--clay);color:#fff;font-weight:600}
+  .nav .ic{width:20px;text-align:center}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;
+    background:var(--paper);border-bottom:1.5px solid var(--line);position:sticky;top:0;z-index:5}
+  .top h2{font-size:18px;color:var(--cocoa)}
+  .who{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--soft)}
+  .who .role{font-family:'Prompt';font-weight:600;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--sage-s);color:#42603a}
+  .who button{border:1.5px solid var(--line);background:var(--paper);border-radius:9px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px}
+  .content{padding:22px;max-width:1100px}
+  /* widgets */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px}
+  .kpi b{font-family:'Prompt';font-weight:700;font-size:26px;color:var(--clay-d);display:block}
+  .kpi span{font-size:12.5px;color:var(--soft)}
+  .panel{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+  h3.st{font-size:16px;color:var(--cocoa);margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 9px;text-align:left;border-bottom:1px solid #eee5d5;vertical-align:middle}
+  th{background:var(--cream2,#F1E7D3);color:var(--cocoa);position:sticky;top:0}
+  .scroll{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  input,select,textarea{font-family:inherit;font-size:13.5px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  button.b{border:none;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;color:#fff;font-family:inherit}
+  .ok{background:var(--sage)}.no{background:#C0603F}.pr{background:var(--clay)}.sl{background:#8a7a66}.gh{background:var(--paper);color:var(--cocoa);border:1.5px solid var(--line)}
+  .badge{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+  .b-ok{background:var(--sage-s);color:#42603a}.b-wait{background:var(--mustard-s);color:#8a6a12}.b-no{background:#F6E0D5;color:#a5402a}
+  .muted{color:var(--soft);font-size:12.5px}.empty{text-align:center;color:#9a8a76;padding:24px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:760px){.side{position:static;width:100%;height:auto;flex:none;display:flex;flex-wrap:wrap;gap:4px}
+    .nav{display:flex;flex-wrap:wrap;gap:4px}.nav a{margin:0}.shell{flex-direction:column}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login">
+  <div class="lcard">
+    <div class="brand">PaiPen หลังบ้าน</div>
+    <div class="sub">ระบบบริหารการอบรม · เข้าสู่ระบบ</div>
+    <label>ชื่อผู้ใช้</label>
+    <input id="u" autocomplete="username">
+    <label>รหัสผ่าน</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button id="loginBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div class="shell">
+    <aside class="side">
+      <div class="logo">PaiPen<small>ระบบหลังบ้าน · ไปเป็น</small></div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+    <div class="main">
+      <div class="top">
+        <h2 id="ptitle">ภาพรวม</h2>
+        <div class="who"><span id="uname"></span><span class="role" id="urole"></span>
+          <button onclick="doLogout()">ออกจากระบบ</button></div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwZfVMp9uXxvr34jBWQAXAJRxAeS3SJCIoXyaKzcYVx9Zoe27ae7M62w0ITIbv6k6WvOg/exec";
+let TOKEN = localStorage.getItem('pp_token') || '';
+let ROLE = localStorage.getItem('pp_role') || '';
+let NAME = localStorage.getItem('pp_name') || '';
+const ST=['สมัครแล้ว','รอตรวจสอบชำระเงิน','ยืนยันสิทธิ์','รายชื่อสำรอง','หลักฐานไม่ถูกต้อง','เข้าอบรมแล้ว','ผ่านเกณฑ์','ไม่ผ่านเกณฑ์','ยกเลิก'];
+const NAVS=[['dash','ภาพรวม','📊'],['list','ผู้สมัคร','👥'],['course','หลักสูตร','📚'],['seat','ที่นั่ง','🪑'],
+  ['check','เช็กชื่อ','📲'],['cert','เกียรติบัตร','🏅'],['notify','แจ้งเตือน','📧'],['report','รายงาน','📄'],['users','ผู้ใช้งาน','🔐']];
+
+function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function badge(s){var c='b-wait';if(/ยืนยัน|ผ่านเกณฑ์|ออกเกียรติ/.test(s))c='b-ok';else if(/ไม่|ยกเลิก/.test(s))c='b-no';return '<span class="badge '+c+'">'+esc(s)+'</span>';}
+
+async function apiRaw(body){
+  const res=await fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  return res.json();
+}
+async function api(action,payload){
+  const d=await apiRaw({apiAction:'admin',token:TOKEN,action:action,payload:payload||{}});
+  if(d && d.relogin){ doLogout(); throw new Error('หมดเวลาเข้าสู่ระบบ'); }
+  return d;
+}
+
+async function doLogin(){
+  const u=document.getElementById('u').value.trim(), pw=document.getElementById('pw').value;
+  const b=document.getElementById('loginBtn'); b.disabled=true; b.textContent='กำลังเข้าสู่ระบบ...';
+  document.getElementById('lerr').textContent='';
+  try{
+    const d=await apiRaw({apiAction:'adminLogin',payload:{username:u,password:pw}});
+    if(d&&d.ok){ TOKEN=d.token; ROLE=d.role; NAME=d.name;
+      localStorage.setItem('pp_token',TOKEN); localStorage.setItem('pp_role',ROLE); localStorage.setItem('pp_name',NAME);
+      startApp();
+    } else { document.getElementById('lerr').textContent=(d&&d.error)||'เข้าสู่ระบบไม่สำเร็จ'; }
+  }catch(e){ document.getElementById('lerr').textContent='เชื่อมต่อไม่ได้'; }
+  finally{ b.disabled=false; b.textContent='เข้าสู่ระบบ'; }
+}
+function doLogout(){ try{api('logout');}catch(e){} localStorage.clear(); TOKEN=''; location.reload(); }
+
+function startApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('uname').textContent=NAME;
+  document.getElementById('urole').textContent=ROLE;
+  const canUsers=(ROLE==='owner'||ROLE==='admin');
+  document.getElementById('nav').innerHTML=NAVS.filter(n=>n[0]!=='users'||canUsers)
+    .map(n=>'<a data-s="'+n[0]+'" onclick="go(\''+n[0]+'\')"><span class="ic">'+n[2]+'</span>'+n[1]+'</a>').join('');
+  go('dash');
+}
+function go(s){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.s===s));
+  const t={dash:'ภาพรวม',list:'ผู้สมัคร',course:'หลักสูตร',seat:'ที่นั่ง',check:'เช็กชื่อ',cert:'เกียรติบัตร',notify:'แจ้งเตือน',report:'รายงาน',users:'ผู้ใช้งาน'}[s];
+  document.getElementById('ptitle').textContent=t;
+  const c=document.getElementById('content'); c.innerHTML='<div class="empty">กำลังโหลด...</div>';
+  ({dash:rDash,list:rList,course:rCourse,seat:rSeat,check:rCheck,cert:rCert,notify:rNotify,report:rReport,users:rUsers}[s])();
+}
+const C=()=>document.getElementById('content');
+
+// ---- ภาพรวม ----
+async function rDash(){const r=await api('dashboard');if(!r.ok){C().innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  const t=r.totals;
+  const k=[['ผู้สมัคร',t.total],['ชำระแล้ว',t.paid],['ยืนยันสิทธิ์',t.confirmed],['สำรอง',t.waitlist],['รอตรวจสลิป',t.pending],['รายได้',t.revenue.toLocaleString()+' ฿']];
+  let h='<div class="kpis">'+k.map(x=>'<div class="kpi"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join('')+'</div>';
+  h+='<div class="panel"><h3 class="st">แยกตามหลักสูตร</h3><div class="scroll"><table><tr><th>หลักสูตร</th><th>สมัคร</th><th>ชำระ</th><th>ยืนยัน</th><th>สำรอง</th><th>รอตรวจ</th><th>ที่นั่งเหลือ</th><th>รายได้</th></tr>'+
+    r.courses.map(c=>'<tr><td>'+esc(c.course_id)+' '+esc(c.course_name)+'</td><td>'+c.total+'</td><td>'+c.paid+'</td><td>'+c.confirmed+'</td><td>'+c.waitlist+'</td><td>'+c.pending+'</td><td>'+c.remaining+'/'+c.seat_limit+'</td><td>'+c.revenue.toLocaleString()+'</td></tr>').join('')+'</table></div></div>';
+  C().innerHTML=h;
+}
+// ---- ผู้สมัคร ----
+function rList(){
+  C().innerHTML='<div class="panel"><div class="bar"><input id="q" placeholder="ค้นหา ชื่อ/เบอร์/หน่วยงาน/รหัส" style="min-width:220px">'+
+    '<select id="fst"><option value="">ทุกสถานะ</option>'+ST.map(s=>'<option>'+s+'</option>').join('')+'</select>'+
+    '<button class="b gh" onclick="loadList()">ค้นหา</button><button class="b pr" onclick="qPending()">เฉพาะรอตรวจสลิป</button>'+
+    '<span class="muted" id="cnt"></span></div><div class="scroll" id="tbl"></div></div>';
+  document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')loadList();});
+  loadList();
+}
+async function loadList(){var f={q:document.getElementById('q').value,status:document.getElementById('fst').value};
+  document.getElementById('tbl').innerHTML='<div class="empty">กำลังโหลด...</div>';renderList(await api('list',f));}
+async function qPending(){document.getElementById('fst').value='';document.getElementById('q').value='';
+  var r=await api('list',{});if(r.ok)r.rows=r.rows.filter(x=>x.pay_status==='รอตรวจสอบ');renderList(r);}
+function renderList(r){if(!r.ok){document.getElementById('tbl').innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  document.getElementById('cnt').textContent='พบ '+r.rows.length+(r.count>r.rows.length?(' (จาก '+r.count+')'):'')+' รายการ';
+  if(!r.rows.length){document.getElementById('tbl').innerHTML='<div class="empty">ไม่พบข้อมูล</div>';return;}
+  document.getElementById('tbl').innerHTML='<table><tr><th>รหัส</th><th>ชื่อ</th><th>หน่วยงาน</th><th>เบอร์</th><th>สถานะ</th><th>ชำระ</th><th>จัดการ</th></tr>'+
+    r.rows.map(x=>{var sel='<select onchange="setSt(\''+x.code+'\',this.value)"><option value="">เปลี่ยนสถานะ…</option>'+ST.map(s=>'<option'+(s===x.reg_status?' selected':'')+'>'+s+'</option>').join('')+'</select>';
+    var act=(x.slip_url?'<button class="b sl" onclick="window.open(\''+x.slip_url+'\')">สลิป</button> ':'')+'<button class="b ok" onclick="appr(\''+x.code+'\')">อนุมัติ</button> <button class="b no" onclick="rej(\''+x.code+'\')">ไม่อนุมัติ</button>';
+    return '<tr><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.org)+'</td><td>'+esc(x.phone)+'</td><td>'+badge(x.reg_status)+'</td><td>'+esc(x.pay_status)+'</td><td>'+act+'<br>'+sel+'</td></tr>';}).join('')+'</table>';
+}
+async function appr(id){var r=await api('approve',{id});alert(r.ok?('อนุมัติแล้ว: '+r.result):('ผิดพลาด: '+r.error));loadList();}
+async function rej(id){var x=prompt('เหตุผลที่ไม่อนุมัติ');if(x===null)return;await api('reject',{id,reason:x});loadList();}
+async function setSt(id,s){if(!s)return;var r=await api('setStatus',{id,status:s});if(!r.ok)alert('ผิดพลาด: '+r.error);loadList();}
+// ---- หลักสูตร ----
+async function rCourse(){var r=await api('courses');if(!r.ok){C().innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  window._courses=r.courses;window._cstat=r.statuses;
+  var h='<div class="panel"><div class="bar"><h3 class="st" style="margin:0">หลักสูตร/รุ่น</h3><button class="b pr" onclick="cForm()">+ เพิ่มรุ่น</button></div>'+
+    '<div class="scroll"><table><tr><th>รหัส</th><th>ชื่อ</th><th>รุ่น</th><th>วันอบรม</th><th>ที่นั่ง</th><th>ราคา</th><th>สถานะ</th><th>สมัคร</th><th></th></tr>'+
+    r.courses.map((c,i)=>'<tr><td>'+esc(c.course_id)+'</td><td>'+esc(c.course_name)+'</td><td>'+esc(c.batch_no)+'</td><td>'+esc(c.start_date)+'</td><td>'+esc(c.seat_limit)+'</td><td>'+esc(c.price)+'</td><td>'+badge(c.status)+'</td><td>'+c.registrations+'</td><td><button class="b gh" onclick="cForm('+i+')">แก้ไข</button></td></tr>').join('')+'</table></div><div id="cform"></div></div>';
+  C().innerHTML=h;
+}
+function cfF(id,label,val,ro){return '<label style="font-size:12px;font-weight:600;display:block">'+label+'<input id="cf_'+id+'" value="'+esc(val)+'" '+(ro||'')+' style="width:100%;margin-top:3px"></label>';}
+function cForm(i){var isNew=(typeof i!=='number');var c=isNew?{}:window._courses[i];var st=window._cstat||[];var fmt=['Online','Onsite','Hybrid'];
+  var h='<div style="background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-top:14px"><h3 class="st">'+(isNew?'เพิ่มรุ่นใหม่':'แก้ไข '+esc(c.course_id))+'</h3>'+
+   '<div class="grid2">'+cfF('course_id','รหัส (เช่น R02)',c.course_id||'',isNew?'':'readonly')+cfF('course_name','ชื่อหลักสูตร',c.course_name||'')+cfF('batch_no','รุ่นที่',c.batch_no||'')+cfF('instructor','วิทยากร',c.instructor||'')+cfF('start_date','วันอบรม',c.start_date||'')+cfF('end_date','วันสิ้นสุด',c.end_date||'')+
+   '<label style="font-size:12px;font-weight:600;display:block">รูปแบบ<select id="cf_format" style="width:100%;margin-top:3px">'+fmt.map(x=>'<option'+(x===c.format?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+   '<label style="font-size:12px;font-weight:600;display:block">สถานะ<select id="cf_status" style="width:100%;margin-top:3px">'+st.map(x=>'<option'+(x===c.status?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+   cfF('seat_limit','ที่นั่ง',c.seat_limit||'')+cfF('price','ราคา',c.price||'')+cfF('meeting_url','ลิงก์ห้องอบรม',c.meeting_url||'')+cfF('material_url','ลิงก์เอกสาร',c.material_url||'')+cfF('certificate_condition','เงื่อนไขเกียรติบัตร',c.certificate_condition||'')+
+   '</div><div style="margin-top:12px"><button class="b ok" onclick="saveCourse('+isNew+')">บันทึก</button> <button class="b gh" onclick="document.getElementById(\'cform\').innerHTML=\'\'">ยกเลิก</button></div></div>';
+  document.getElementById('cform').innerHTML=h;
+}
+function cfv(id){var e=document.getElementById('cf_'+id);return e?e.value:'';}
+async function saveCourse(isNew){var o={mode:isNew?'new':'edit',course_id:cfv('course_id'),course_name:cfv('course_name'),batch_no:cfv('batch_no'),instructor:cfv('instructor'),start_date:cfv('start_date'),end_date:cfv('end_date'),format:cfv('format'),status:cfv('status'),seat_limit:cfv('seat_limit'),price:cfv('price'),meeting_url:cfv('meeting_url'),material_url:cfv('material_url'),certificate_condition:cfv('certificate_condition')};
+  var r=await api('saveCourse',o);if(r.ok){alert('บันทึกแล้ว');rCourse();}else alert('ผิดพลาด: '+r.error);}
+// ---- ที่นั่ง ----
+async function rSeat(){var r=await api('seats');if(!r.ok){C().innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  C().innerHTML='<div class="panel"><h3 class="st">จัดการที่นั่ง/รายชื่อสำรอง</h3><table><tr><th>หลักสูตร</th><th>ยืนยัน</th><th>ที่นั่ง</th><th>เหลือ</th><th>สำรอง</th><th></th></tr>'+
+    r.courses.map(c=>'<tr><td>'+esc(c.course_id)+' '+esc(c.course_name)+'</td><td>'+c.confirmed+'</td><td>'+c.seat_limit+'</td><td>'+c.remaining+'</td><td>'+c.waitlist+'</td><td>'+(c.remaining>0&&c.waitlist>0?'<button class="b pr" onclick="promote(\''+c.course_id+'\')">เลื่อนสำรอง</button>':'-')+'</td></tr>').join('')+'</table></div>';
+}
+async function promote(c){var r=await api('promote',{course:c});alert(r.ok?('เลื่อนขึ้นแล้ว: '+r.promoted):('ผิดพลาด: '+r.error));rSeat();}
+// ---- เช็กชื่อ ----
+async function rCheck(){var r=await api('seats');var opts=(r.ok?r.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
+  C().innerHTML='<div class="panel"><h3 class="st">สร้าง QR/ลิงก์ เช็กชื่อ</h3><div class="bar"><select id="ckC">'+opts+'</select>หมดอายุใน <input id="ckM" type="number" value="120" style="width:70px"> นาที'+
+    '<button class="b ok" onclick="mkTok(\'in\')">QR เข้า</button><button class="b no" onclick="mkTok(\'out\')">QR ออก</button></div><div id="ckOut"></div><h3 class="st" style="margin-top:14px">ลิงก์ที่ใช้งานอยู่</h3><div id="ckL"></div></div>';
+  loadTok();
+}
+async function mkTok(m){var r=await api('createToken',{course:document.getElementById('ckC').value,mode:m,minutes:document.getElementById('ckM').value});
+  if(!r.ok){document.getElementById('ckOut').innerHTML='<div class="empty">ผิดพลาด: '+r.error+'</div>';return;}
+  document.getElementById('ckOut').innerHTML='<div style="text-align:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px"><b>'+(m==='in'?'เช็กชื่อเข้า':'เช็กชื่อออก')+' · หมดอายุ '+esc(r.expire_at)+'</b><br><img src="'+r.qr_url+'" style="width:200px;height:200px"><br><a href="'+r.url+'" target="_blank" style="font-size:12px;word-break:break-all">'+esc(r.url)+'</a></div>';loadTok();}
+async function loadTok(){var r=await api('tokens');var el=document.getElementById('ckL');if(!r.ok||!r.rows.length){el.innerHTML='<div class="empty">ไม่มีลิงก์ที่ใช้งานอยู่</div>';return;}
+  el.innerHTML='<table><tr><th>หลักสูตร</th><th>ประเภท</th><th>หมดอายุ</th><th>ลิงก์</th><th></th></tr>'+r.rows.map(t=>'<tr><td>'+esc(t.course_id)+'</td><td>'+(t.mode==='in'?'เข้า':'ออก')+'</td><td>'+(t.expired?'<span class="muted">หมดอายุ</span>':esc(t.expire_at))+'</td><td><a href="'+t.url+'" target="_blank">เปิด</a></td><td><button class="b no" onclick="delTok(\''+t.token_id+'\')">ปิด</button></td></tr>').join('')+'</table>';}
+async function delTok(id){await api('deactivateToken',{token_id:id});loadTok();}
+// ---- เกียรติบัตร ----
+async function rCert(){var s=await api('seats');var opts='<option value="">ทุกหลักสูตร</option>'+(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+'</option>').join('');
+  C().innerHTML='<div class="panel"><div class="bar"><select id="ctC" onchange="certList()">'+opts+'</select><button class="b gh" onclick="prevCert()">ดูตัวอย่างดีไซน์</button><button class="b pr" onclick="issueAll()">ออกทั้งรุ่น</button><span class="muted" id="ctMsg"></span></div><div id="ctB"></div></div>';
+  certList();
+}
+async function certList(){document.getElementById('ctB').innerHTML='<div class="empty">กำลังโหลด...</div>';var r=await api('certList',{course:document.getElementById('ctC').value});
+  if(!r.ok){document.getElementById('ctB').innerHTML='<div class="empty">ผิดพลาด</div>';return;}
+  var h='<h3 class="st">ผู้ผ่านเกณฑ์ที่ยังไม่ออก ('+r.candidates.length+')</h3>'+(r.candidates.length?'<div class="scroll"><table><tr><th>รหัส</th><th>ชื่อ</th><th></th></tr>'+r.candidates.map(x=>'<tr><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td><button class="b ok" onclick="issueOne(\''+x.code+'\')">ออก</button></td></tr>').join('')+'</table></div>':'<div class="empty">ไม่มี</div>');
+  h+='<h3 class="st" style="margin-top:12px">ออกแล้ว ('+r.issued.length+')</h3>'+(r.issued.length?'<div class="scroll"><table><tr><th>เลขที่</th><th>ชื่อ</th><th>อีเมล</th><th></th></tr>'+r.issued.map(x=>'<tr><td>'+esc(x.cert_no)+'</td><td>'+esc(x.name)+'</td><td>'+(x.sent_status==='sent'?'ส่งแล้ว':esc(x.sent_status||'-'))+'</td><td>'+(x.pdf_url?'<a href="'+x.pdf_url+'" target="_blank">PDF</a> ':'')+'<button class="b sl" onclick="resendCert(\''+x.registration_id+'\')">ส่งซ้ำ</button></td></tr>').join('')+'</table></div>':'<div class="empty">ยังไม่มี</div>');
+  document.getElementById('ctB').innerHTML=h;
+}
+async function issueOne(id){document.getElementById('ctMsg').textContent='กำลังออก...';var r=await api('issueCert',{id});document.getElementById('ctMsg').textContent=r.ok?('ออกแล้ว '+r.certificate_no):('ผิดพลาด: '+r.error);certList();}
+async function issueAll(){var c=document.getElementById('ctC').value;if(!confirm('ออกเกียรติบัตรให้ผู้ผ่านเกณฑ์ทุกคน'+(c?(' รุ่น '+c):'')+'?'))return;document.getElementById('ctMsg').textContent='กำลังออก...';var r=await api('issueAll',{course:c});document.getElementById('ctMsg').textContent=r.ok?('ออกแล้ว '+r.issued+'/'+r.total):('ผิดพลาด: '+r.error);certList();}
+async function resendCert(id){var r=await api('resendCert',{id});alert(r.ok?'ส่งซ้ำแล้ว':('ผิดพลาด: '+r.error));}
+async function prevCert(){document.getElementById('ctMsg').textContent='กำลังสร้าง...';var r=await api('previewCert');if(r.ok){document.getElementById('ctMsg').textContent='';window.open(r.url,'_blank');}else document.getElementById('ctMsg').textContent='ผิดพลาด: '+r.error;}
+// ---- แจ้งเตือน ----
+async function rNotify(){var s=await api('seats');var opts=(s.ok?s.courses:[]).map(c=>'<option value="'+esc(c.course_id)+'">'+esc(c.course_id)+' '+esc(c.course_name)+'</option>').join('');
+  C().innerHTML='<div class="panel"><h3 class="st">ส่งแจ้งเตือนเป็นชุด (อีเมล)</h3><div class="bar"><select id="ntC">'+opts+'</select><select id="ntT"><option value="reminder">แจ้งเตือนก่อนอบรม</option><option value="room_link">ส่งลิงก์ห้อง</option><option value="ask_eval">ให้ทำแบบประเมิน</option></select><button class="b pr" onclick="sendN()">ส่ง</button><span class="muted" id="ntMsg"></span></div><p class="muted">* อีเมลอัตโนมัติ (สมัคร/ยืนยัน/ผ่านเกณฑ์) ส่งเองตามเหตุการณ์</p><h3 class="st" style="margin-top:10px">ประวัติล่าสุด</h3><div class="scroll" id="ntL"></div></div>';
+  loadNL();
+}
+async function sendN(){document.getElementById('ntMsg').textContent='กำลังส่ง...';var r=await api('notifyCourse',{course:document.getElementById('ntC').value,type:document.getElementById('ntT').value});document.getElementById('ntMsg').textContent=r.ok?('ส่ง '+r.sent+'/'+r.total+(r.fail?(' · ล้มเหลว '+r.fail):'')):('ผิดพลาด: '+r.error);loadNL();}
+async function loadNL(){var r=await api('notifications');var el=document.getElementById('ntL');if(!r.ok||!r.rows.length){el.innerHTML='<div class="empty">ยังไม่มีประวัติ</div>';return;}
+  el.innerHTML='<table><tr><th>เวลา</th><th>รหัส</th><th>ประเภท</th><th>สถานะ</th><th></th></tr>'+r.rows.map(n=>'<tr><td>'+esc(n.sent_at)+'</td><td>'+esc(n.registration_id)+'</td><td>'+esc(n.message_type)+'</td><td>'+(n.status==='sent'?'<span class="badge b-ok">ส่งแล้ว</span>':'<span class="badge b-no">ล้มเหลว</span>')+'</td><td>'+(n.status!=='sent'?'<button class="b sl" onclick="resendN(\''+n.notification_id+'\')">ส่งซ้ำ</button>':'')+'</td></tr>').join('')+'</table>';}
+async function resendN(id){await api('resendNotify',{id});loadNL();}
+// ---- รายงาน ----
+function rReport(){C().innerHTML='<div class="panel"><h3 class="st">ส่งออกรายงาน (CSV)</h3><p class="muted">เปิดด้วย Excel รองรับภาษาไทย</p><div style="margin-top:10px"><button class="b pr" onclick="exp(\'participants\')">รายชื่อผู้สมัคร</button> <button class="b pr" onclick="exp(\'payments\')">การชำระเงิน</button> <button class="b pr" onclick="exp(\'assessments\')">ผลประเมิน/ชิ้นงาน</button></div><div class="muted" id="rpMsg" style="margin-top:10px"></div></div>';}
+async function exp(which){document.getElementById('rpMsg').textContent='กำลังสร้าง...';var r=await api('export',{which});if(!r.ok){document.getElementById('rpMsg').textContent='ผิดพลาด';return;}
+  var blob=new Blob([r.csv],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();document.getElementById('rpMsg').textContent='ดาวน์โหลด '+r.filename+' แล้ว';}
+// ---- ผู้ใช้งาน ----
+async function rUsers(){var r=await api('usersList');if(!r.ok){C().innerHTML='<div class="empty">'+esc(r.error||'ไม่มีสิทธิ์')+'</div>';return;}
+  window._roles=r.roles;
+  var h='<div class="panel"><div class="bar"><h3 class="st" style="margin:0">ผู้ใช้งานระบบ</h3><button class="b pr" onclick="uForm()">+ เพิ่มผู้ใช้</button></div>'+
+    '<div class="scroll"><table><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>บทบาท</th><th>สถานะ</th><th>เข้าระบบล่าสุด</th><th></th></tr>'+
+    r.users.map((u,i)=>'<tr><td>'+esc(u.username)+'</td><td>'+esc(u.name)+'</td><td>'+esc(u.role)+'</td><td>'+(u.status==='active'?'<span class="badge b-ok">ใช้งาน</span>':'<span class="badge b-no">ปิด</span>')+'</td><td>'+esc(u.last_login)+'</td><td><button class="b gh" onclick="uForm('+i+')">แก้ไข</button> '+(ROLE==='owner'?'<button class="b no" onclick="toggleU(\''+u.user_id+'\',\''+(u.status==='active'?'inactive':'active')+'\')">'+(u.status==='active'?'ปิด':'เปิด')+'</button>':'')+'</td></tr>').join('')+'</table></div><div id="uform"></div></div>';
+  window._users=r.users;C().innerHTML=h;
+}
+function uForm(i){var isNew=(typeof i!=='number');var u=isNew?{}:window._users[i];var roles=window._roles||['staff'];
+  var h='<div style="background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-top:14px"><h3 class="st">'+(isNew?'เพิ่มผู้ใช้':'แก้ไข '+esc(u.username))+'</h3><div class="grid2">'+
+   '<label style="font-size:12px;font-weight:600">ชื่อผู้ใช้<input id="uf_username" value="'+esc(u.username||'')+'" '+(isNew?'':'readonly')+' style="width:100%;margin-top:3px"></label>'+
+   '<label style="font-size:12px;font-weight:600">ชื่อ-สกุล<input id="uf_name" value="'+esc(u.name||'')+'" style="width:100%;margin-top:3px"></label>'+
+   '<label style="font-size:12px;font-weight:600">บทบาท<select id="uf_role" style="width:100%;margin-top:3px">'+roles.map(x=>'<option'+(x===u.role?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+   '<label style="font-size:12px;font-weight:600">รหัสผ่าน'+(isNew?'':' (เว้นว่าง=ไม่เปลี่ยน)')+'<input id="uf_pw" type="password" style="width:100%;margin-top:3px"></label>'+
+   '</div><div style="margin-top:12px"><button class="b ok" onclick="saveU('+(isNew?'true':('false,\''+u.user_id+'\''))+')">บันทึก</button> <button class="b gh" onclick="document.getElementById(\'uform\').innerHTML=\'\'">ยกเลิก</button></div></div>';
+  document.getElementById('uform').innerHTML=h;
+}
+async function saveU(isNew,uid){var o={username:document.getElementById('uf_username').value,name:document.getElementById('uf_name').value,role:document.getElementById('uf_role').value,password:document.getElementById('uf_pw').value};
+  if(!isNew)o.user_id=uid;var r=await api('saveUser',o);if(r.ok){alert('บันทึกแล้ว');rUsers();}else alert('ผิดพลาด: '+r.error);}
+async function toggleU(id,st){if(!confirm('เปลี่ยนสถานะผู้ใช้นี้?'))return;var r=await api('setUserStatus',{user_id:id,status:st});if(!r.ok)alert('ผิดพลาด: '+r.error);rUsers();}
+
+// ---- init ----
+if(TOKEN){ startApp(); } else { document.getElementById('login').style.display='flex'; }
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
