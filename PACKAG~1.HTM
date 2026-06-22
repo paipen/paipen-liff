@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>PaiPen · ไปเป็น — บริการภาพรวม & ใบเสนอราคา</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FAF3E7;--paper:#FFFCF6;--ink:#3a3027;--soft:#7C6B58;--line:#E7DAC1;--cocoa:#5A4636;--coffee:#241712;
+    --clay:#C2724E;--clay-d:#A65A39;--clay-s:#F3E1D5;--sage:#6E8560;--sage-s:#E5ECDC;--mustard:#D9A227;--mustard-s:#F8EBC8;--plum-s:#E7E2F2;--orange:#E8602F}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);background:var(--cream);
+    background-image:radial-gradient(circle at 6% 2%,var(--sage-s) 0,transparent 15%),radial-gradient(circle at 95% 3%,var(--mustard-s) 0,transparent 13%);
+    line-height:1.5;padding:0 16px 50px}
+  h1,h2,h3{font-family:'Prompt',sans-serif}
+  .page{max-width:1080px;margin:0 auto}
+  /* banner */
+  .banner{padding:22px 0 14px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .banner img,.banner svg{display:block;width:min(560px,94%);height:auto;margin:0 auto}
+  .hero{text-align:center;margin-bottom:20px}
+  .hero h1{font-size:21px;color:var(--cocoa)}
+  .hero p{color:var(--soft);font-size:14px;margin-top:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+  .chip{font-family:'Prompt';font-weight:600;font-size:12.5px;padding:6px 14px;border-radius:999px;border:1.5px solid}
+  .c1{background:var(--sage-s);color:#3f5d38;border-color:var(--sage)}
+  .c2{background:var(--clay-s);color:var(--clay-d);border-color:var(--clay)}
+  .c3{background:var(--mustard-s);color:#8a6a12;border-color:var(--mustard)}
+  h2.sec{font-size:16px;color:var(--cocoa);margin:24px 0 11px;border-left:5px solid var(--clay);padding-left:11px}
+  h2.cat{font-size:18px;color:#fff;background:var(--cocoa);border-radius:12px;padding:9px 16px;margin:26px 0 12px}
+  h2.cat small{font-weight:500;font-size:12.5px;color:#e7dccd}
+  .rent,.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .buy{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:860px){.buy{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.rent,.buy,.two{grid-template-columns:1fr}}
+  .pk{background:var(--paper);border:1.5px solid var(--line);border-radius:18px;padding:16px 15px;position:relative;display:flex;flex-direction:column}
+  .pk.best{border:2px solid var(--clay);box-shadow:0 12px 26px rgba(194,114,78,.22)}
+  .tagbest{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--clay);color:#fff;font-family:'Prompt';font-weight:600;font-size:11px;padding:3px 12px;border-radius:999px;white-space:nowrap}
+  .chip2{border-radius:10px;padding:5px 10px;display:inline-block;font-family:'Prompt';font-weight:700;font-size:14.5px;color:var(--cocoa)}
+  .for{font-size:11.5px;color:var(--soft);min-height:26px;margin:4px 0 6px}
+  .price{font-family:'Prompt';font-weight:700;font-size:23px;color:var(--clay-d)}
+  .price small{font-size:12px;color:var(--soft);font-weight:500}
+  .pk ul{list-style:none;margin-top:8px;font-size:12px;color:var(--ink);flex:1}
+  .pk li{padding:3px 0 3px 17px;position:relative}
+  .pk li::before{content:"✔";position:absolute;left:0;color:var(--sage);font-size:10.5px;top:4px}
+  .a{background:var(--sage-s)}.b{background:var(--clay-s)}.c{background:var(--mustard-s)}.d{background:var(--plum-s)}
+  .r1{background:var(--sage-s)}.r2{background:var(--clay-s)}
+  .panel{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:7px 9px;text-align:left;border-bottom:1px solid #eee5d5}
+  th{background:#F1E7D3;color:var(--cocoa);font-family:'Prompt'}
+  td.ct,th.ct{text-align:center}
+  .ok{color:var(--sage);font-weight:700}.no{color:#cbb8a3}
+  .val{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:760px){.val{grid-template-columns:1fr}}
+  .vi{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 15px}
+  .vi b{font-family:'Prompt';font-size:14.5px;color:var(--cocoa);display:block;margin-bottom:3px}
+  .vi p{font-size:12.5px;color:var(--soft)}
+  .terms{font-size:13px;color:var(--ink);margin:0 0 0 18px}
+  .terms li{margin:5px 0}
+  .foot{text-align:center;color:#efe6d8;font-size:12.5px;margin-top:18px;padding:18px;background:var(--cocoa);border-radius:16px}
+  .foot b{font-family:'Prompt';font-size:15px;color:#fff}
+  @media print{body{background:#fff}.panel,.pk,.vi{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===== BANNER (โลโก้แนวนอน เวกเตอร์) ===== -->
+  <div class="banner">
+    <img src="paipen_banner.png" alt="PaiPen · ไปเป็น">
+  </div>
+
+  <div class="hero">
+    <h1>บริการภาพรวม — ระบบ · เว็บไซต์ · ร้านค้าออนไลน์ · โดเมน</h1>
+    <p>เรียน AI แล้วใช้เป็นจริง · โดย ผศ.ดร.ไพศาล ดาแร่ (Dr.PPai) · ราคายังไม่รวม VAT</p>
+    <div class="chips">
+      <span class="chip c1">✔ เลือก "เช่าใช้" หรือ "เป็นเจ้าของ"</span>
+      <span class="chip c2">✔ ลูกค้าเป็นเจ้าของข้อมูลเอง</span>
+      <span class="chip c3">✔ ดูแลต่อเนื่อง มีรับประกัน</span>
+    </div>
+  </div>
+
+  <!-- ===== หมวด 1 ===== -->
+  <h2 class="cat">หมวดบริการที่ 1 · ระบบบริหารการอบรม/อีเวนต์ (PaiPen) <small>สมัคร → เช็กชื่อ → ประเมิน → เกียรติบัตร → หลังบ้าน</small></h2>
+
+  <h2 class="sec">รูปแบบ ก · เช่าใช้ระบบสำเร็จ (รายปี) — งบเบา เริ่มเร็ว</h2>
+  <div class="rent">
+    <div class="pk"><span class="chip2 r1">Rent Lite</span><div class="for">ครู/รายเล็ก เริ่มต้น</div>
+      <div class="price">฿3,900<small>/ปี</small></div>
+      <ul><li>สมัคร + ชำระเงิน + ตรวจสลิป</li><li>ตรวจสถานะ · รวมดูแล/อัปเดต</li><li>+ ค่าติดตั้งครั้งแรก ฿2,900</li></ul></div>
+    <div class="pk best"><div class="tagbest">★ คุ้มสุดสำหรับรายเล็ก</div><span class="chip2 r2">Rent Pro</span><div class="for">ใช้ระบบครบวงจรทันที</div>
+      <div class="price">฿9,900<small>/ปี</small></div>
+      <ul><li>เช็กชื่อ QR+LINE · ประเมิน</li><li>เกียรติบัตร · เว็บหลังบ้าน · สำรองข้อมูล</li><li>+ ค่าติดตั้งครั้งแรก ฿2,900</li></ul></div>
+  </div>
+
+  <h2 class="sec">รูปแบบ ข · จ้างพัฒนาเป็นของตนเอง (เหมาจ่ายครั้งเดียว)</h2>
+  <div class="buy">
+    <div class="pk"><span class="chip2 a">A · Lite</span><div class="for">อีเวนต์เดียว</div>
+      <div class="price">฿9,900</div>
+      <ul><li>สมัคร (เว็บ+LINE)</li><li>ชำระเงิน+ตรวจสลิป</li><li>Rich Menu+ต้อนรับ</li><li>เป็นเจ้าของระบบ</li></ul></div>
+    <div class="pk best"><div class="tagbest">★ แนะนำ</div><span class="chip2 b">B · Standard</span><div class="for">สถาบัน/ผู้จัดประจำ</div>
+      <div class="price">฿45,000</div>
+      <ul><li>ทุกอย่างใน A +</li><li>เช็กชื่อ QR+LINE</li><li>ประเมิน+เกียรติบัตร</li><li>เว็บหลังบ้าน+รายงาน</li></ul></div>
+    <div class="pk"><span class="chip2 c">C · Pro</span><div class="for">แบรนด์/บริษัท</div>
+      <div class="price">฿95,000</div>
+      <ul><li>ทุกอย่างใน B +</li><li>โลโก้/แบรนด์เต็ม</li><li>ตรวจสลิปอัตโนมัติ (API)</li><li>ดูแลฟรี 3 เดือน</li></ul></div>
+    <div class="pk"><span class="chip2 d">D · Enterprise</span><div class="for">ราชการ/อปท.</div>
+      <div class="price">฿150,000<small> +</small></div>
+      <ul><li>ทุกอย่างใน C +</li><li>ออกแบบตาม TOR</li><li>SLA + อบรม on-site</li><li>ดูแลรายปี</li></ul></div>
+  </div>
+
+  <h2 class="sec">เปรียบเทียบแพ็กเกจกับฟีเจอร์ที่ได้รับ (หมวด 1)</h2>
+  <div class="panel">
+    <table>
+      <tr><th>ฟีเจอร์</th><th class="ct">Rent Lite</th><th class="ct">Rent Pro</th><th class="ct">A</th><th class="ct">B</th><th class="ct">C</th><th class="ct">D</th></tr>
+      <tr><td>สมัคร + ชำระเงิน + ตรวจสลิป</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>เช็กชื่อ QR + LINE</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>ประเมิน + เกียรติบัตร</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>เว็บหลังบ้าน + รายงาน + สำรองข้อมูล</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>เป็นเจ้าของระบบ/โค้ด</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>แบรนด์/ปรับแต่งเฉพาะ + API ตรวจสลิป</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct ok">✔</td><td class="ct ok">✔</td></tr>
+      <tr><td>TOR / SLA / on-site / ดูแลรายปี</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct no">–</td><td class="ct ok">✔</td></tr>
+      <tr><td><b>ราคา</b></td><td class="ct"><b>3,900/ปี</b></td><td class="ct"><b>9,900/ปี</b></td><td class="ct"><b>9,900</b></td><td class="ct"><b>45,000</b></td><td class="ct"><b>95,000</b></td><td class="ct"><b>150,000+</b></td></tr>
+    </table>
+  </div>
+
+  <!-- ===== หมวด 2 ===== -->
+  <h2 class="cat">หมวดบริการที่ 2 · รับทำเว็บไซต์ <small>responsive · โหลดเร็ว · ราคายังไม่รวมโดเมน/โฮสติ้ง</small></h2>
+  <div class="panel">
+    <table>
+      <tr><th>แพ็กเกจ</th><th>ราคา</th><th>รวมอะไร</th></tr>
+      <tr><td>Web Landing (1 หน้า)</td><td>฿4,900</td><td>หน้าเดียวจบ + ปุ่มติดต่อ/LINE</td></tr>
+      <tr><td>Web Business (5–8 หน้า)</td><td>฿15,000</td><td>เว็บบริษัท/องค์กร + ฟอร์ม</td></tr>
+      <tr><td><b>Web E-commerce ⭐</b></td><td><b>฿39,000</b></td><td>ตะกร้า+ชำระเงิน+สต็อก+หลังบ้าน</td></tr>
+      <tr><td>Web Custom System</td><td>เริ่ม ฿60,000</td><td>เว็บแอป/ระบบเฉพาะทาง</td></tr>
+    </table>
+    <p style="font-size:11.8px;color:var(--soft);margin-top:8px"><b>ราคาแยกตามหน้า/หมวด:</b> หน้าเพิ่ม ฿1,200 · Landing พิเศษ ฿2,500 · ระบบสมาชิก +฿8,000 · บล็อก +฿3,500 · หลายภาษา +฿4,000/ภาษา · ชำระเงินออนไลน์ +฿6,000 · จอง/นัดหมาย +฿8,000 · SEO+Analytics +฿3,000 · ดูแล ฿800–3,000/ด.</p>
+  </div>
+
+  <!-- ===== หมวด 3 ===== -->
+  <h2 class="cat">หมวดบริการที่ 3 · ระบบบริหารร้านค้าออนไลน์ <small>ไม่ใช่ POS — ไม่รวมแคชเชียร์/ฮาร์ดแวร์</small></h2>
+  <div class="panel">
+    <table>
+      <tr><th>แพ็กเกจ</th><th>จ้างทำ</th><th>เช่าใช้/ด.</th><th>รวมอะไร</th></tr>
+      <tr><td>Shop Starter</td><td>฿19,000</td><td>฿590</td><td>หน้าร้าน+ตะกร้า+ออเดอร์/สินค้าพื้นฐาน</td></tr>
+      <tr><td><b>Shop Standard ⭐</b></td><td><b>฿39,000</b></td><td><b>฿990</b></td><td>+สต็อก+จัดส่ง+ลูกค้า+คูปอง+แดชบอร์ด</td></tr>
+      <tr><td>Shop Pro</td><td>฿69,000</td><td>฿1,900</td><td>+ชำระออนไลน์+เชื่อม LINE/FB+รายงาน</td></tr>
+      <tr><td>Shop Enterprise</td><td colspan="2">ขอใบเสนอราคา</td><td>+Shopee/Lazada/ERP/หลายสาขา</td></tr>
+    </table>
+    <p style="font-size:11.8px;color:var(--soft);margin-top:8px">หมวดฟีเจอร์: หน้าร้าน&สินค้า · ตะกร้า&ชำระเงิน · ออเดอร์&จัดส่ง · สต็อก&คลัง · ลูกค้า&CRM · รายงาน&แดชบอร์ด</p>
+  </div>
+
+  <!-- ===== หมวด 4 ===== -->
+  <h2 class="cat">หมวดบริการที่ 4 · บริการจดทะเบียนโดเมน <small>คิดแยกจากแพ็กเกจ · ลูกค้าเป็นเจ้าของโดเมนเอง</small></h2>
+  <div class="panel">
+    <table>
+      <tr><th>นามสกุลโดเมน</th><th>ราคา/ปี (รวมจดให้)</th><th>หมายเหตุ</th></tr>
+      <tr><td>.com / .net / .org</td><td>฿590/ปี</td><td>นิยมที่สุด ใช้ทั่วไป</td></tr>
+      <tr><td>.co.th / .in.th / .or.th</td><td>฿1,290/ปี</td><td>ต้องมีเอกสารนิติบุคคล</td></tr>
+      <tr><td>.shop / .store / .online / .asia</td><td>฿790–1,290/ปี</td><td>ตามนามสกุล/โปรฯ</td></tr>
+    </table>
+    <p style="font-size:11.8px;color:var(--soft);margin-top:8px">รวมค่าจดให้ + ตั้งค่า DNS/เชื่อมเว็บ · <b>ฟรีค่าจดปีแรกเมื่อทำเว็บ Business ขึ้นไป</b> · มีโดเมนอยู่แล้วเชื่อมให้ฟรี</p>
+  </div>
+
+  <!-- ===== บริการเสริม ===== -->
+  <h2 class="sec">บริการเสริม / ค่าดูแลต่อเนื่อง (ทุกหมวด)</h2>
+  <div class="panel">
+    <table>
+      <tr><th>รายการ</th><th>ราคา</th></tr>
+      <tr><td>ดูแล/ซัพพอร์ตรายเดือน (แก้บั๊ก ปรับเล็กน้อย สำรองข้อมูล)</td><td>฿1,500–5,000 / เดือน</td></tr>
+      <tr><td>ออกแบบโลโก้ + ชุดอัตลักษณ์แบรนด์</td><td>฿5,000–15,000</td></tr>
+      <tr><td>ระบบตรวจสลิปอัตโนมัติ (API)</td><td>+฿8,000 (+ค่า API รายเดือน)</td></tr>
+      <tr><td>เพิ่มหลักสูตร/รุ่น หรือปรับฟอร์ม</td><td>฿500–2,000 / ครั้ง</td></tr>
+      <tr><td>อบรมการใช้งาน on-site (ครึ่งวัน)</td><td>฿5,000 / ครั้ง</td></tr>
+      <tr><td>ออกแบบ Rich Menu / สื่อกราฟิก</td><td>฿1,500–4,000 / ชิ้น</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== ความคุ้มค่า ===== -->
+  <h2 class="sec">ทำไมต้อง PaiPen — ความคุ้มค่าที่ได้รับ</h2>
+  <div class="val">
+    <div class="vi"><b>ครบ 4 หมวดในที่เดียว</b><p>ระบบอบรม · เว็บไซต์ · ร้านค้าออนไลน์ · โดเมน ดูแลโดยทีมเดียว</p></div>
+    <div class="vi"><b>เลือกได้ตามงบ</b><p>เช่าใช้ราคาเบา หรือจ้างทำเป็นเจ้าของเต็มตัว — ตอบได้ทั้งครูและองค์กร</p></div>
+    <div class="vi"><b>ระดับหลักแสน ต้นทุนเกือบศูนย์</b><p>ใช้โครงสร้าง Google/LINE — ไม่มีค่าเช่าเซิร์ฟเวอร์รายเดือน</p></div>
+    <div class="vi"><b>คืนทุนเร็ว (ROI)</b><p>ออกเกียรติบัตร/เช็กชื่อ/ประเมินอัตโนมัติ ลดเวลาทำงานหลายสิบ ชม./รุ่น</p></div>
+    <div class="vi"><b>น่าเชื่อถือ + พิสูจน์แล้ว</b><p>ออกแบบโดยอาจารย์มหาวิทยาลัย มีระบบใช้งานจริง พร้อมเอกสาร/คู่มือครบ</p></div>
+    <div class="vi"><b>สิ่งที่ AI แทนไม่ได้</b><p>การติดตั้งให้ใช้ได้จริง + ความรับผิดชอบ + การดูแลต่อเนื่อง</p></div>
+  </div>
+
+  <!-- ===== เงื่อนไข ===== -->
+  <h2 class="sec">เงื่อนไขและการชำระเงิน</h2>
+  <div class="panel">
+    <ul class="terms">
+      <li><b>จ้างพัฒนา:</b> มัดจำ 50% เริ่มงาน · 50% เมื่อส่งมอบ (Enterprise แบ่งงวดตาม TOR)</li>
+      <li><b>เช่าใช้:</b> ชำระค่าติดตั้ง + ค่าเช่าปีแรกก่อนเริ่มใช้งาน · ต่ออายุรายปี</li>
+      <li><b>โดเมน:</b> ชำระตามรอบปี คิดแยกจากแพ็กเกจ · มีแจ้งเตือนก่อนหมดอายุ</li>
+      <li>ราคายังไม่รวม VAT 7% (หากต้องการใบกำกับภาษี) · ยืนราคา 30 วัน</li>
+      <li>รับประกันงาน 30–90 วันตามแพ็กเกจ · เริ่มนับเวลาเมื่อได้รับข้อมูลจากลูกค้าครบ</li>
+      <li>ลูกค้าเป็นเจ้าของข้อมูล/บัญชี/โดเมนของตนเอง · ดำเนินการตาม PDPA</li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <b>PaiPen · ไปเป็น</b><br>
+    บริการครบ: ระบบอบรม · เว็บไซต์ · ร้านค้าออนไลน์ · โดเมน<br>
+    LINE @285qytpp · โทร. 06 4197 8945 · paipenbydrppai@gmail.com
+  </div>
+</div>
+</body>
+</html>
