@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>PaiPen · ไปเป็น — ระบบอัตโนมัติบน LINE + Google Workspace</title>
+<meta name="description" content="PaiPen สร้างระบบอัตโนมัติบน LINE OA + Google Apps Script + Google Sheets — อบรม อีเวนต์ ร้านค้า เว็บไซต์ ติว พร้อมแพ็กเกจและราคาดึงสดจากชีต">
+<meta property="og:title" content="PaiPen · ไปเป็น — Automation Studio">
+<meta property="og:description" content="เปลี่ยนงานซ้ำ ๆ ให้ทำงานเองอัตโนมัติ บน LINE + Google Workspace">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0805; --bg2:#130C07; --panel:#18110A; --panel2:#21160D;
+    --line:rgba(255,160,90,.10); --line2:rgba(255,160,90,.20);
+    --ink:#FDEFE3; --ink-soft:#D0AE92; --ink-dim:#8A6E58;
+    --teal:#FF8C42; --teal-d:#E86A1C;
+    --indigo:#FFC247; --indigo-d:#E0A020;
+    --clay:#FF6B3D; --sage:#FFB066; --gold:#FFCB57;
+    --glow:0 0 0 1px var(--line), 0 18px 50px rgba(0,0,0,.55);
+    --radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;color:var(--ink);
+    background:var(--bg);line-height:1.6;overflow-x:hidden;
+    background-image:
+      radial-gradient(800px 480px at 100% -12%, rgba(255,120,30,.10), transparent 58%),
+      radial-gradient(760px 480px at 0% 0%, rgba(255,170,70,.06), transparent 55%),
+      radial-gradient(700px 560px at 50% 116%, rgba(255,90,40,.06), transparent 60%);
+    background-attachment:fixed;
+  }
+  h1,h2,h3,.dp{font-family:'Prompt',sans-serif;line-height:1.25;font-weight:600;letter-spacing:-.2px}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 clamp(20px,5vw,52px);width:100%}
+
+  /* ---- animated background: real PaiPen logo watermark (from GitHub) ---- */
+  .fx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .orb{position:absolute;border-radius:50%;filter:blur(130px);opacity:.16}
+  .orb.o1{width:460px;height:460px;left:-170px;top:-150px;
+    background:radial-gradient(circle,#FF7A1A,transparent 68%);animation:float1 36s ease-in-out infinite}
+  .orb.o2{width:540px;height:540px;right:-210px;top:32%;
+    background:radial-gradient(circle,#FF4D17,transparent 68%);animation:float2 42s ease-in-out infinite}
+  /* logo.png has a dark/brown bg → screen blend drops the box, leaves cream line-art + orange dot */
+  .mark-bg{position:absolute;mix-blend-mode:screen;opacity:.5;
+    -webkit-mask-image:radial-gradient(circle,#000 56%,transparent 72%);
+    mask-image:radial-gradient(circle,#000 56%,transparent 72%)}
+  .mark-bg.br{width:min(62vw,720px);right:-12vw;bottom:-16vw;animation:markFloat 32s ease-in-out infinite}
+  .mark-bg.tl{width:min(40vw,460px);left:-11vw;top:-4vw;opacity:.32;animation:markFloat2 40s ease-in-out infinite}
+  @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+  @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-46px,34px)}}
+  @keyframes markFloat{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(-26px,-20px) rotate(-3deg)}}
+  @keyframes markFloat2{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(24px,18px) rotate(4deg)}}
+  @media(prefers-reduced-motion:reduce){.orb,.mark-bg{animation:none}}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+    background:rgba(11,8,5,.74);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:18px;height:62px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Prompt';font-weight:700;font-size:18px}
+  .brand .mk{width:38px;height:38px;border-radius:10px;overflow:hidden;flex:0 0 38px;
+    display:grid;place-items:center;border:1px solid var(--line2)}
+  .brand .mk img{width:100%;height:100%;object-fit:cover;object-position:center 30%;transform:scale(1.55);display:block}
+  .brand b{font-weight:700} .brand .by{color:var(--teal);font-weight:600;font-size:13px}
+  .nav-links{display:flex;gap:22px;margin-left:auto}
+  .nav-links a{color:var(--ink-soft);font-size:14.5px;font-weight:500;transition:.15s}
+  .nav-links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:'Prompt';font-weight:600;font-size:14.5px;
+    padding:10px 18px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:.18s;white-space:nowrap}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--indigo));color:#06131c;box-shadow:0 8px 24px rgba(52,224,200,.28)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(52,224,200,.4)}
+  .btn-ghost{background:rgba(255,255,255,.04);border-color:var(--line2);color:var(--ink)}
+  .btn-ghost:hover{background:rgba(255,255,255,.08)}
+  .nav-cta{margin-left:4px}
+  @media(max-width:860px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:74px 0 54px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:46px;align-items:center}
+  @media(max-width:900px){.hero-grid{grid-template-columns:1fr;gap:34px}}
+  .chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;font-family:'IBM Plex Mono';
+    color:var(--teal);background:rgba(52,224,200,.1);border:1px solid rgba(52,224,200,.3);
+    padding:7px 14px;border-radius:999px}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero h1{font-size:46px;font-weight:700;margin:20px 0 16px}
+  .hero h1 .g{background:linear-gradient(120deg,var(--teal),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lead{color:var(--ink-soft);font-size:17px;max-width:540px;margin-bottom:26px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+  .stats{display:flex;gap:26px;margin-top:34px;flex-wrap:wrap}
+  .stat .n{font-family:'Prompt';font-weight:700;font-size:26px;
+    background:linear-gradient(120deg,var(--teal),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{color:var(--ink-dim);font-size:12.5px;font-family:'IBM Plex Mono'}
+  @media(max-width:560px){.hero h1{font-size:34px}}
+
+  /* terminal visual */
+  .term{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line2);
+    border-radius:18px;box-shadow:var(--glow);overflow:hidden}
+  .term-bar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+  .term-bar i{width:11px;height:11px;border-radius:50%;display:block}
+  .term-bar .r{background:#ff5f57}.term-bar .y{background:#febc2e}.term-bar .g{background:#28c840}
+  .term-bar span{margin-left:8px;color:var(--ink-dim);font-family:'IBM Plex Mono';font-size:12px}
+  .term-body{padding:18px;font-family:'IBM Plex Mono';font-size:13px;line-height:1.85}
+  .term-body .c{color:var(--ink-dim)} .term-body .k{color:var(--indigo)}
+  .term-body .s{color:var(--teal)} .term-body .v{color:var(--gold)} .term-body .ok{color:var(--sage)}
+  .flow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;padding:16px;
+    background:rgba(255,255,255,.02);border:1px dashed var(--line2);border-radius:14px}
+  .node{flex:1;text-align:center}
+  .node .ic{width:42px;height:42px;margin:0 auto 7px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line2)}
+  .node b{display:block;font-family:'Prompt';font-size:13px;font-weight:600}
+  .node small{color:var(--ink-dim);font-size:11px}
+  .arrow{color:var(--teal);font-size:18px;flex:0 0 auto}
+
+  /* sections */
+  section{padding:clamp(48px,7vw,76px) 0}
+  .sec-head{max-width:680px;margin-bottom:34px}
+  .sec-head .kicker{font-family:'IBM Plex Mono';font-size:13px;color:var(--teal);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .sec-head h2{font-size:32px;margin:10px 0 10px}
+  .sec-head p{color:var(--ink-soft);font-size:16px}
+  @media(max-width:560px){.sec-head h2{font-size:26px}}
+
+  /* capability cards */
+  .caps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:820px){.caps{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.caps{grid-template-columns:1fr}}
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;transition:.2s}
+  .cap:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 14px 34px rgba(0,0,0,.4)}
+  .cap .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;margin-bottom:14px;
+    background:linear-gradient(135deg,rgba(52,224,200,.18),rgba(108,140,255,.18));border:1px solid var(--line2)}
+  .cap h3{font-size:17px;margin-bottom:7px} .cap p{color:var(--ink-soft);font-size:14px}
+
+  /* service lines */
+  .lines{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+  @media(max-width:900px){.lines{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:560px){.lines{grid-template-columns:1fr 1fr}}
+  .lcard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px 16px;text-align:center;cursor:pointer;transition:.2s}
+  .lcard:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .lcard .ic{font-size:30px;margin-bottom:10px}
+  .lcard b{display:block;font-family:'Prompt';font-size:15.5px}
+  .lcard small{color:var(--ink-dim);font-size:12px;font-family:'IBM Plex Mono'}
+
+  /* live badge */
+  .live-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .live{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono';font-size:12.5px;
+    padding:6px 13px;border-radius:999px;border:1px solid var(--line2);color:var(--ink-soft)}
+  .live .d{width:8px;height:8px;border-radius:50%;background:var(--ink-dim)}
+  .live.on{color:var(--sage);border-color:rgba(155,224,139,.4);background:rgba(155,224,139,.08)}
+  .live.on .d{background:var(--sage);box-shadow:0 0 9px var(--sage);animation:pulse 1.8s infinite}
+  .live.snap{color:var(--gold);border-color:rgba(255,203,87,.35);background:rgba(255,203,87,.07)}
+  .live.snap .d{background:var(--gold)}
+
+  /* filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+  .fbtn{font-family:'Prompt';font-weight:500;font-size:13.5px;padding:8px 15px;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--ink-soft);transition:.15s}
+  .fbtn:hover{color:var(--ink);border-color:var(--line2)}
+  .fbtn.act{background:linear-gradient(135deg,var(--teal),var(--indigo));color:#06131c;border-color:transparent;font-weight:600}
+
+  /* package grid */
+  .pkgs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:860px){.pkgs{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.pkgs{grid-template-columns:1fr}}
+  .pkg{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:.2s;position:relative;overflow:hidden}
+  .pkg::before{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:var(--accent,var(--teal));opacity:.85}
+  .pkg:hover{transform:translateY(-4px);border-color:var(--line2);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+  .pkg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .pkg .ln{font-family:'IBM Plex Mono';font-size:11px;color:var(--accent,var(--teal));font-weight:600}
+  .pkg h3{font-size:18px;margin-top:3px}
+  .tag{font-family:'IBM Plex Mono';font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap}
+  .tag.rental{background:rgba(108,140,255,.15);color:var(--indigo)}
+  .tag.onetime{background:rgba(52,224,200,.15);color:var(--teal)}
+  .price{display:flex;align-items:baseline;gap:4px;font-family:'Prompt'}
+  .price .big{font-size:30px;font-weight:700}
+  .price .u{font-size:14px;color:var(--ink-soft);font-weight:500}
+  .price-sub{color:var(--ink-dim);font-size:12.5px;font-family:'IBM Plex Mono';margin-top:-6px}
+  .cap-note{color:var(--ink-soft);font-size:13.5px;border-top:1px solid var(--line);padding-top:11px}
+  .pkg-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto}
+  .mtag{font-size:11px;font-family:'IBM Plex Mono';color:var(--ink-dim);background:rgba(255,255,255,.03);border:1px solid var(--line);padding:3px 8px;border-radius:7px}
+  .mtag.pro{color:var(--gold);border-color:rgba(255,203,87,.3)}
+  .pkg .ask{margin-top:10px;text-align:center;font-family:'Prompt';font-weight:600;font-size:13.5px;
+    padding:9px;border-radius:10px;border:1px solid var(--line2);color:var(--ink);transition:.15s}
+  .pkg .ask:hover{background:rgba(52,224,200,.1);border-color:var(--teal)}
+
+  /* addon / domain table-cards */
+  .mini{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:680px){.mini{grid-template-columns:1fr}}
+  .mrow{display:flex;justify-content:space-between;gap:14px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:13px;padding:15px 17px;transition:.15s}
+  .mrow:hover{border-color:var(--line2)}
+  .mrow .nm{font-size:14.5px;font-weight:500}
+  .mrow .ct{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-dim)}
+  .mrow .pr{font-family:'Prompt';font-weight:600;font-size:15px;color:var(--teal);white-space:nowrap;text-align:right}
+  .mrow .pr small{display:block;color:var(--ink-dim);font-size:11px;font-weight:400;font-family:'IBM Plex Mono'}
+
+  /* SLA */
+  .sla{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:820px){.sla{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.sla{grid-template-columns:1fr}}
+  .slacard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px}
+  .slacard h3{font-size:16px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .slacard p{color:var(--ink-soft);font-size:13px;margin-bottom:12px;min-height:38px}
+  .slacard .lv{font-family:'IBM Plex Mono';font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:9px}
+  .slacard .lv b{color:var(--teal)}
+  .slacard .lv .pro{color:var(--gold)}
+
+  /* conditions accordion */
+  .acc{max-width:820px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:2px 18px;margin-bottom:10px}
+  summary{cursor:pointer;padding:15px 0;font-family:'Prompt';font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";font-family:'IBM Plex Mono';font-size:20px;color:var(--teal)}
+  details[open] summary::after{content:"–"}
+  details .body{padding:0 0 16px;color:var(--ink-soft);font-size:14px}
+
+  /* CTA */
+  .cta{background:linear-gradient(135deg,rgba(52,224,200,.12),rgba(108,140,255,.12));
+    border:1px solid var(--line2);border-radius:24px;padding:48px 36px;text-align:center}
+  .cta h2{font-size:32px;margin-bottom:12px}
+  .cta p{color:var(--ink-soft);font-size:16px;max-width:520px;margin:0 auto 26px}
+  .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  @media(max-width:560px){.cta{padding:36px 22px}.cta h2{font-size:25px}}
+
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:34px 0;color:var(--ink-dim);font-size:13.5px}
+  .foot-in{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center}
+  footer a{color:var(--ink-soft)} footer a:hover{color:var(--teal)}
+  .skeleton{color:var(--ink-dim);font-family:'IBM Plex Mono';font-size:13px;padding:30px;text-align:center;
+    border:1px dashed var(--line2);border-radius:14px}
+</style>
+</head>
+<body>
+<div class="fx">
+  <span class="orb o1"></span><span class="orb o2"></span>
+  <img class="mark-bg br" src="https://paipen.github.io/paipen-liff/logo.png" alt="" aria-hidden="true">
+  <img class="mark-bg tl" src="https://paipen.github.io/paipen-liff/logo.png" alt="" aria-hidden="true">
+</div>
+
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><span class="mk"><img src="https://paipen.github.io/paipen-liff/logo.png" alt="PaiPen"></span><span>PaiPen <span class="by">ไปเป็น</span></span></a>
+    <div class="nav-links">
+      <a href="#how">ระบบทำงานอย่างไร</a>
+      <a href="#lines">สายบริการ</a>
+      <a href="#packages">แพ็กเกจ</a>
+      <a href="#addons">บริการเสริม</a>
+      <a href="#sla">SLA</a>
+    </div>
+    <a class="btn btn-primary nav-cta" href="https://line.me/R/ti/p/@paipen" target="_blank">ขอใบเสนอราคา</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="chip"><span class="dot"></span>AUTOMATION STUDIO · LINE + GOOGLE WORKSPACE</span>
+      <h1>เปลี่ยนงานซ้ำ ๆ ให้ <span class="g">ทำงานเองอัตโนมัติ</span> บน LINE</h1>
+      <p class="lead">PaiPen ออกแบบและพัฒนาระบบอัตโนมัติด้วย LINE OA + Google Apps Script + Google Sheets — รับสมัคร เช็กชื่อ ออกเกียรติบัตร รับออเดอร์ ตรวจสลิป แจ้งเตือน และรายงาน ทำงานเองตลอด 24 ชั่วโมง</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#packages">ดูแพ็กเกจ &amp; ราคา →</a>
+        <a class="btn btn-ghost" href="https://line.me/R/ti/p/@paipen" target="_blank">💬 แชทกับเรา</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n">25</div><div class="l">แพ็กเกจสำเร็จรูป</div></div>
+        <div class="stat"><div class="n">5</div><div class="l">สายบริการ</div></div>
+        <div class="stat"><div class="n">24/7</div><div class="l">ระบบทำงานเอง</div></div>
+        <div class="stat"><div class="n">~99.5%</div><div class="l">Uptime SLA</div></div>
+      </div>
+    </div>
+    <div class="term">
+      <div class="term-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>paipen-automation.gs</span></div>
+      <div class="term-body">
+        <div><span class="c">// LINE → Apps Script → Sheets</span></div>
+        <div><span class="k">function</span> <span class="s">onMessage</span>(e) {</div>
+        <div>&nbsp;&nbsp;<span class="k">const</span> order = <span class="s">parse</span>(e.<span class="v">text</span>);</div>
+        <div>&nbsp;&nbsp;Sheets.<span class="s">append</span>(<span class="v">'Orders'</span>, order);</div>
+        <div>&nbsp;&nbsp;Slip.<span class="s">verify</span>(order.slip); <span class="c">// ≥95%</span></div>
+        <div>&nbsp;&nbsp;<span class="k">return</span> reply(<span class="ok">'✓ รับออเดอร์แล้ว'</span>);</div>
+        <div>}</div>
+      </div>
+      <div class="flow">
+        <div class="node"><div class="ic">💬</div><b>LINE OA</b><small>ลูกค้าทัก</small></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="ic">⚙️</div><b>Apps Script</b><small>ประมวลผล</small></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="ic">📊</div><b>Sheets/Drive</b><small>บันทึก+ส่ง</small></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// capabilities</div>
+      <h2>ระบบอัตโนมัติที่เราสร้างให้คุณ</h2>
+      <p>ทุกแพ็กเกจทำงานบนสถาปัตยกรรมเดียวกัน — เชื่อถือได้ ลูกค้าเป็นเจ้าของข้อมูล Export ได้ตลอด</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><div class="ic">🤖</div><h3>แชตบอท &amp; ตอบอัตโนมัติ</h3><p>FAQ bot, Rich Menu, ตอบ keyword และต้อนรับผู้ติดตามอัตโนมัติบน LINE OA</p></div>
+      <div class="cap"><div class="ic">📝</div><h3>รับสมัคร / ออเดอร์</h3><p>ฟอร์มสมัคร–สั่งซื้อเข้าชีตทันที พร้อมอีเมลยืนยันภายใน 1 นาที</p></div>
+      <div class="cap"><div class="ic">🧾</div><h3>ตรวจสลิปอัตโนมัติ</h3><p>เชื่อม API ตรวจสลิป ความแม่นยำ ≥95% ตัดสต็อก/อัปเดตสถานะให้อัตโนมัติ</p></div>
+      <div class="cap"><div class="ic">🎖️</div><h3>เกียรติบัตร / ใบเสร็จ PDF</h3><p>ออกเอกสาร PDF + QR ทีละคนหรือทั้งรุ่น แล้วส่งอีเมลให้อัตโนมัติ</p></div>
+      <div class="cap"><div class="ic">📲</div><h3>เช็กชื่อ &amp; แจ้งเตือน</h3><p>QR Check-in กันสแกนซ้ำ + แจ้งเตือนทางอีเมล/LINE ตามเหตุการณ์</p></div>
+      <div class="cap"><div class="ic">📈</div><h3>Dashboard &amp; สำรองข้อมูล</h3><p>รายงานสรุป Export CSV และสำรองข้อมูลอัตโนมัติรายสัปดาห์</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="lines" style="padding-top:10px">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// service lines</div>
+      <h2>5 สายบริการ</h2>
+      <p>เลือกสายที่ตรงกับธุรกิจคุณ แล้วดูแพ็กเกจด้านล่าง — กดเพื่อกรอง</p>
+    </div>
+    <div class="lines" id="lineCards"></div>
+  </div>
+</section>
+
+<section id="packages">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// packages</div>
+      <h2>แพ็กเกจ &amp; ราคา</h2>
+      <p>เช่ารายเดือน (เราดูแลให้) หรือซื้อขาด (เป็นเจ้าของโค้ด) — ราคาสุทธิ ไม่รวม VAT</p>
+    </div>
+    <div class="live-row">
+      <span class="live" id="liveBadge"><span class="d"></span><span id="liveTxt">กำลังเชื่อมต่อชีต…</span></span>
+      <span class="ct" style="color:var(--ink-dim);font-family:'IBM Plex Mono';font-size:12px">ข้อมูลซิงก์จาก Google Sheets</span>
+    </div>
+    <div class="filters" id="lineFilter"></div>
+    <div class="filters" id="typeFilter">
+      <button class="fbtn act" data-type="all">ทั้งหมด</button>
+      <button class="fbtn" data-type="rental">เช่ารายเดือน</button>
+      <button class="fbtn" data-type="onetime">ซื้อขาด</button>
+    </div>
+    <div class="pkgs" id="pkgGrid"></div>
+  </div>
+</section>
+
+<section id="addons">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// add-ons</div>
+      <h2>บริการเสริม</h2>
+      <p>เพิ่มเข้าไปในแพ็กเกจไหนก็ได้ — งานออกแบบ ระบบ ซัพพอร์ต และข้อมูล</p>
+    </div>
+    <div class="mini" id="addonGrid"><div class="skeleton">กำลังโหลด…</div></div>
+  </div>
+</section>
+
+<section id="domain">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// domain &amp; infra</div>
+      <h2>โดเมน · SSL · อีเมล</h2>
+      <p>จดโดเมน ตั้งค่า DNS ติดตั้ง SSL และอีเมลธุรกิจ you@yourdomain.com</p>
+    </div>
+    <div class="mini" id="domainGrid"><div class="skeleton">กำลังโหลด…</div></div>
+  </div>
+</section>
+
+<section id="sla">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// service level</div>
+      <h2>ระดับ SLA</h2>
+      <p>เวลาตอบรับและแก้ไขตามความรุนแรง — Lite และ Pro (ตามแพ็กเกจ)</p>
+    </div>
+    <div class="sla" id="slaGrid"><div class="skeleton">กำลังโหลด…</div></div>
+  </div>
+</section>
+
+<section id="terms">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">// terms</div>
+      <h2>เงื่อนไขสำคัญ</h2>
+      <p>สรุปเงื่อนไขมาตรฐาน — รายละเอียดเต็มอยู่ในใบเสนอราคา/สัญญาเฉพาะงาน</p>
+    </div>
+    <div class="acc" id="termsAcc"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>พร้อมให้ระบบทำงานแทนคุณหรือยัง?</h2>
+      <p>ทักมาเล่าโจทย์ของคุณ เราประเมินและส่งใบเสนอราคาให้ฟรี ภายใน 1–2 วันทำการ</p>
+      <div class="cta-btns">
+        <a class="btn btn-primary" href="https://line.me/R/ti/p/@paipen" target="_blank">💬 ทักทาง LINE @paipen</a>
+        <a class="btn btn-ghost" href="mailto:paipenbydrppai@gmail.com">✉️ paipenbydrppai@gmail.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>
+      <div style="font-family:'Prompt';font-weight:600;color:var(--ink);font-size:15px">PaiPen · ไปเป็น</div>
+      <div>ผศ.ดร.ไพศาล ดาแร่ (Dr.PPai) · โทร. 06-4197-8945</div>
+    </div>
+    <div style="text-align:right">
+      <div>LINE OA: <a href="https://line.me/R/ti/p/@paipen" target="_blank">@paipen</a> · <a href="mailto:paipenbydrppai@gmail.com">อีเมล</a></div>
+      <div class="mono" style="font-size:11.5px;color:var(--ink-dim);margin-top:4px">GAS · LINE Messaging API · Sheets · Drive · Slides · Gmail</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const SHEET_ID = "1IMdbRrIBLgW9Bz7l3-cK1kJXGxRw8uY0AWatf2AXvqU";
+const LINE_URL = "https://line.me/R/ti/p/@paipen";
+
+/* ---- service line meta ---- */
+const LINES = [
+  {key:"อบรม",   label:"อบรม",   en:"Training", ic:"🎓", color:"#FF8C42"},
+  {key:"อีเวนต์", label:"อีเวนต์", en:"Event",    ic:"🎪", color:"#FFB347"},
+  {key:"ร้านค้า", label:"ร้านค้า", en:"Shop",     ic:"🛒", color:"#FF6B3D"},
+  {key:"เว็บไซต์",label:"เว็บไซต์",en:"Website",  ic:"🌐", color:"#FFD24A"},
+  {key:"ติว",    label:"ติว",     en:"Tutor",    ic:"📚", color:"#FF9E5E"},
+];
+const lineMeta = k => LINES.find(l=>l.key===k) || {label:k,color:"#34E0C8",ic:"📦"};
+
+/* ---- embedded snapshot (fallback; live fetch overrides) ---- */
+let PACKAGES = [
+  ["TRAIN-LITE","อบรม","Train-Lite","rental",990,390,3900,null,"ตลอดการใช้งาน",null,"lite","1 แอดมิน · ผู้เข้าร่วม ≤100/เดือน · 1 หลักสูตร"],
+  ["TRAIN-PRO","อบรม","Train-Pro","rental",2900,790,7900,null,"ตลอดการใช้งาน",null,"pro","3 แอดมิน · ผู้เข้าร่วม/หลักสูตร ไม่จำกัด"],
+  ["TRAIN-A-LITE","อบรม","A — Lite","onetime",null,null,null,9900,"1–2 สัปดาห์",30,"lite","1 แอดมิน · 1 หลักสูตร"],
+  ["TRAIN-B-STD","อบรม","B — Standard","onetime",null,null,null,45000,"3–4 สัปดาห์",60,"pro","3 แอดมิน · ไม่จำกัดผู้เข้าร่วม · เกียรติบัตร+เช็กชื่อ"],
+  ["TRAIN-C-PRO","อบรม","C — Pro","onetime",null,null,null,95000,"5–7 สัปดาห์",90,"pro","Custom roles · API สลิป · โดเมน+SSL · แบรนด์"],
+  ["TRAIN-D-ENT","อบรม","D — Enterprise","onetime",null,null,null,150000,"8–12 สัปดาห์",365,"pro","Multi-tenant ≥2 หน่วยงาน · role ≥5 · รับประกัน 1 ปี"],
+  ["EV-LITE","อีเวนต์","Ev-Lite","rental",990,390,3900,null,"ตลอดการใช้งาน",null,"lite","≤300/งาน · ≤3 งาน/ปี · QR Check-in"],
+  ["EV-PRO-R","อีเวนต์","Ev-Pro (เช่า)","rental",2900,790,7900,null,"ตลอดการใช้งาน",null,"pro","ไม่จำกัด · Badge + ใบรับรอง + Dashboard"],
+  ["EV-BASIC","อีเวนต์","Ev-Basic","onetime",null,null,null,9900,"1–2 สัปดาห์",30,"lite","≤500/งาน · สมัคร + QR Check-in"],
+  ["EV-STD","อีเวนต์","Ev-Standard","onetime",null,null,null,35000,"3–4 สัปดาห์",60,"pro","Badge + Certificate อัตโนมัติ"],
+  ["EV-PRO-O","อีเวนต์","Ev-Pro (ซื้อขาด)","onetime",null,null,null,75000,"5–7 สัปดาห์",90,"pro","Custom flow · API สลิป · แบรนด์"],
+  ["SHOP-LITE","ร้านค้า","Shop-Lite","rental",990,390,3900,null,"ตลอดการใช้งาน",null,"lite","สินค้า ≤50 · ออเดอร์ไม่จำกัด · Chatbot"],
+  ["SHOP-PRO-R","ร้านค้า","Shop-Pro (เช่า)","rental",2900,790,7900,null,"ตลอดการใช้งาน",null,"pro","สินค้าไม่จำกัด · สต็อก + โปรโมชัน"],
+  ["SHOP-BASIC","ร้านค้า","Shop-Basic","onetime",null,null,null,12000,"1–2 สัปดาห์",30,"lite","แนะนำ ≤200 สินค้า · สั่งซื้อ + แจ้ง Admin"],
+  ["SHOP-STD","ร้านค้า","Shop-Standard","onetime",null,null,null,35000,"3–4 สัปดาห์",60,"pro","สต็อกอัตโนมัติ + โปรโมชัน + ใบเสร็จ PDF"],
+  ["SHOP-PRO-O","ร้านค้า","Shop-Pro (ซื้อขาด)","onetime",null,null,null,75000,"5–7 สัปดาห์",90,"pro","หลายสาขา · API สลิป · แบรนด์"],
+  ["WEB-LANDING","เว็บไซต์","Landing Page","onetime",null,null,null,3500,"3–5 วัน",14,"lite","1 หน้า · Responsive · ผู้เข้าชมไม่จำกัด"],
+  ["WEB-BUSINESS","เว็บไซต์","Business Website","onetime",null,null,null,9900,"1–2 สัปดาห์",30,"lite","5–8 หน้า · Contact Form + SEO"],
+  ["WEB-PORTFOLIO","เว็บไซต์","Portfolio/Blog + CMS","onetime",null,null,null,14900,"2–3 สัปดาห์",30,"lite","8–12 หน้า · CMS เพิ่มโพสต์เองได้"],
+  ["WEB-ECOM","เว็บไซต์","E-commerce","onetime",null,null,null,29900,"3–5 สัปดาห์",60,"pro","ตะกร้า + Checkout + PromptPay/สลิป"],
+  ["TUTOR-LITE","ติว","Tutor-Lite","rental",990,390,3900,null,"ตลอดการใช้งาน",null,"lite","≤100 นักเรียน · ≤3 วิชา · จองคาบ+เครดิต"],
+  ["TUTOR-PRO-R","ติว","Tutor-Pro (เช่า)","rental",2900,790,7900,null,"ตลอดการใช้งาน",null,"pro","หลายติวเตอร์ · เครดิต/แพ็กเกจ · ตารางแยก"],
+  ["TUTOR-BASIC","ติว","Tutor-Basic","onetime",null,null,null,14900,"1–2 สัปดาห์",30,"lite","จองคาบ + เครดิต พื้นฐาน"],
+  ["TUTOR-STD","ติว","Tutor-Standard","onetime",null,null,null,39000,"3–4 สัปดาห์",60,"pro","จอง/เลื่อน/ยกเลิก + ปฏิทิน + เกียรติบัตร"],
+  ["TUTOR-PRO-O","ติว","Tutor-Pro (ซื้อขาด)","onetime",null,null,null,79000,"5–7 สัปดาห์",90,"pro","หลายติวเตอร์ + payout · Content Gate · API สลิป"],
+].map(r=>({id:r[0],line:r[1],name:r[2],type:r[3],setup:r[4],monthly:r[5],yearly:r[6],onetime:r[7],timeline:r[8],warranty:r[9],sla:r[10],cap:r[11]}));
+
+let ADDONS = [
+  ["ออกแบบ","โลโก้ (≤3 แนวคิด · แก้ ≤2 รอบ) ส่ง .AI/.PNG/.SVG/PDF",3500,8000,"ต่อชิ้น"],
+  ["ออกแบบ","Brand Identity ชุด (Logo+Palette+Font+Guideline+นามบัตร)",5000,15000,"ต่อชุด"],
+  ["ออกแบบ","Rich Menu / สื่อ LINE OA",1500,3000,"ต่อชิ้น"],
+  ["ออกแบบ","Infographic / สื่อกราฟิก",1000,4000,"ต่อชิ้น"],
+  ["ออกแบบ","Template เกียรติบัตร/Badge/ใบรับรอง",1500,3500,"ต่อชิ้น"],
+  ["ระบบ","API ตรวจสลิปอัตโนมัติ (รายเดือน)",500,500,"ต่อเดือน"],
+  ["ระบบ","API ตรวจสลิปอัตโนมัติ (ซื้อขาด)",8000,8000,"ครั้งเดียว"],
+  ["ระบบ","LINE Broadcast (รายเดือน)",300,300,"ต่อเดือน"],
+  ["ระบบ","เพิ่มหลักสูตร/งาน/สินค้า",300,500,"ต่อรายการ"],
+  ["ซัพพอร์ต","ดูแลรักษารายเดือน (ระบบซื้อขาด)",1500,5000,"ต่อเดือน"],
+  ["ซัพพอร์ต","อบรม On-site (ครึ่งวัน ~3 ชม.)",5000,5000,"ต่อครั้ง"],
+  ["ซัพพอร์ต","อบรมออนไลน์เพิ่มเติม (Zoom 1–1.5 ชม.)",1500,1500,"ต่อครั้ง"],
+  ["ข้อมูล","Import ข้อมูลเก่า ≤1,000 รายการ",2000,5000,"ต่องาน"],
+  ["ปรับแต่ง","Feature เพิ่มเติม (Hourly Rate)",500,500,"ต่อชม."],
+].map(r=>({cat:r[0],name:r[1],min:r[2],max:r[3],unit:r[4]}));
+
+let DOMAINS = [
+  ["โดเมน","จดโดเมน .com/.net/.org (1 ปี) + DNS เบื้องต้น",590,890,"ต่อปี"],
+  ["โดเมน","จดโดเมน .co.th/.th (1 ปี)",890,1200,"ต่อปี"],
+  ["โดเมน","ต่ออายุโดเมนรายปี",590,1200,"ต่อปี"],
+  ["DNS","ตั้งค่า DNS Records (A/CNAME/MX/TXT)",500,500,"ครั้งเดียว"],
+  ["SSL","ติดตั้ง SSL (HTTPS + Auto-renew)",500,500,"ครั้งเดียว"],
+  ["อีเมล","ตั้งค่า Email Hosting you@domain.com",1500,1500,"ครั้งเดียว"],
+  ["Redirect","ตั้งค่า URL Redirect",300,300,"ครั้งเดียว"],
+  ["ย้าย","ย้าย Hosting/โดเมน (ไฟล์+DNS+ทดสอบ)",1000,3000,"ต่องาน"],
+].map(r=>({cat:r[0],name:r[1],min:r[2],max:r[3],unit:r[4]}));
+
+let SLA = [
+  ["🔴 Critical","ระบบใช้งานไม่ได้เลย (LINE ไม่ตอบ / timeout / 500)",4,1,4,1,"LINE + โทรศัพท์","ทุกวัน 08:00–20:00"],
+  ["🟠 High","Feature หลักพัง เช่น ชำระเงิน / สมัคร / ออเดอร์",8,2,4,1,"LINE + Email","จ–ศ 09:00–17:00"],
+  ["🟡 Medium","Feature รองพัง เช่น Export CSV / รายงาน",24,3,4,2,"Email","จ–ศ 09:00–17:00"],
+  ["🟢 Low","คำถาม / ขอปรับ label / UI เล็กน้อย",4,3,2,2,"LINE / Email","จ–ศ 09:00–17:00"],
+].map(r=>({label:r[0],desc:r[1],lr:r[2],ld:r[3],pr:r[4],pd:r[5],channel:r[6],hours:r[7]}));
+
+const TERMS = [
+  ["ยืนราคา &amp; ภาษี","ยืนราคา 30 วันนับจากวันออกใบเสนอราคา · ราคาทั้งหมดเป็นราคาสุทธิ ไม่รวม VAT (ผู้ให้บริการยังไม่จดทะเบียน VAT) · นิติบุคคล/หน่วยงานรัฐ หักภาษี ณ ที่จ่าย 3% และออกหนังสือรับรองให้"],
+  ["เช่า vs ซื้อขาด","เช่า (rental): จ่ายรายเดือน/ปี เราดูแลให้บนบัญชี Google ของ PaiPen หยุดจ่ายก็หยุดใช้ · ซื้อขาด (onetime): จ่ายครั้งเดียว เป็นเจ้าของโค้ดทั้งหมดหลังชำระครบ ติดตั้งบนบัญชีลูกค้า"],
+  ["การรับประกัน","ครอบคลุม Bug จากโค้ดของเราตามระยะแพ็กเกจ (14–90 วัน / 1 ปีสำหรับ Enterprise) · ไม่รวมการเปลี่ยน Scope, การเปลี่ยนนโยบาย LINE/Google, หรือการที่ลูกค้าแก้โค้ดเอง"],
+  ["การชำระแบบงวด (Milestone)","งานซื้อขาดแบ่งจ่ายตามงวดงานที่ส่งมอบและตรวจรับ · ลูกค้าตอบ Accept/Reject ภายใน 5 วันทำการ (เตือน 2 ครั้งก่อนถือเป็น Accept อัตโนมัติ)"],
+  ["สิ่งที่ลูกค้าต้องเตรียม","Google Account, LINE OA + Developer access, GitHub Account, โดเมน (ถ้ามี), โลโก้ + สี + Brief, ข้อมูลทดสอบ UAT · ส่งล่าช้า Timeline เลื่อนตามจริง"],
+  ["ดูแลหลังส่งมอบ","งานซื้อขาดไม่รวมค่าดูแลรายเดือน · ซื้อ Retainer ฿1,500–5,000/เดือนเพิ่มได้ · งานนอกการรับประกันคิดตาม Change Request / Hourly Rate ฿500/ชม."],
+  ["PDPA &amp; ความปลอดภัย","ลูกค้าเป็นผู้ควบคุมข้อมูล (Controller) · PaiPen เป็นผู้ประมวลผล (Processor) ตามคำสั่งลูกค้า · จำกัดสิทธิ์ตามบทบาท (RBAC) + ActivityLogs · ลบสลิปอัตโนมัติภายใน 90 วัน"],
+  ["Fair Use &amp; โควตา","คำว่า “ไม่จำกัด” อยู่ภายใต้เพดานการใช้งานที่เป็นธรรม · โควตาอีเมล Gmail ~100/วัน, Workspace ~1,500/วัน · LINE ตาม Plan ลูกค้า · โควตาผู้ให้บริการภายนอกหมดไม่ถือเป็น SLA breach"],
+];
+
+/* ---- helpers ---- */
+const num = v => { if(v===null||v===undefined||v==="") return null; const n=Number(String(v).replace(/[^\d.]/g,"")); return isNaN(n)?null:n; };
+const fmt = v => { const n=num(v); return n===null ? "—" : n.toLocaleString("en-US"); };
+
+/* ---- renderers ---- */
+function renderLines(){
+  document.getElementById("lineCards").innerHTML = LINES.map(l=>{
+    const count = PACKAGES.filter(p=>p.line===l.key).length;
+    return `<div class="lcard" onclick="filterLine('${l.key}')" style="--accent:${l.color}">
+      <div class="ic">${l.ic}</div><b>${l.label}</b><small>${count} แพ็กเกจ</small></div>`;
+  }).join("");
+  document.getElementById("lineFilter").innerHTML =
+    `<button class="fbtn act" data-line="all">ทุกสาย</button>` +
+    LINES.map(l=>`<button class="fbtn" data-line="${l.key}">${l.ic} ${l.label}</button>`).join("");
+  document.querySelectorAll("#lineFilter .fbtn").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("#lineFilter .fbtn").forEach(x=>x.classList.remove("act"));
+    b.classList.add("act"); state.line=b.dataset.line; renderPkgs();
+  });
+}
+
+const state = {line:"all", type:"all"};
+function filterLine(k){
+  state.line=k;
+  document.querySelectorAll("#lineFilter .fbtn").forEach(x=>x.classList.toggle("act",x.dataset.line===k));
+  renderPkgs();
+  document.getElementById("packages").scrollIntoView({behavior:"smooth"});
+}
+document.querySelectorAll("#typeFilter .fbtn").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#typeFilter .fbtn").forEach(x=>x.classList.remove("act"));
+  b.classList.add("act"); state.type=b.dataset.type; renderPkgs();
+});
+
+function pkgCard(p){
+  const m=lineMeta(p.line);
+  const isRent=p.type==="rental";
+  const priceMain = isRent ? `฿${fmt(p.monthly)}<span class="u">/เดือน</span>` : `฿${fmt(p.onetime)}`;
+  const priceSub = isRent
+    ? `ติดตั้ง ฿${fmt(p.setup)} · รายปี ฿${fmt(p.yearly)}`
+    : `${p.timeline||""}${p.warranty?` · รับประกัน ${p.warranty} วัน`:""}`;
+  const slaTag = p.sla==="pro" ? `<span class="mtag pro">SLA Pro</span>` : `<span class="mtag">SLA Lite</span>`;
+  return `<div class="pkg" style="--accent:${m.color}">
+    <div class="pkg-top">
+      <div><div class="ln">${m.ic} ${m.label}</div><h3>${p.name}</h3></div>
+      <span class="tag ${p.type}">${isRent?"เช่า":"ซื้อขาด"}</span>
+    </div>
+    <div class="price"><span class="big">${priceMain}</span></div>
+    <div class="price-sub">${priceSub}</div>
+    <div class="cap-note">${p.cap||""}</div>
+    <div class="pkg-meta">${slaTag}<span class="mtag">${p.id}</span></div>
+    <a class="ask" href="${LINE_URL}" target="_blank">ขอใบเสนอราคา →</a>
+  </div>`;
+}
+function renderPkgs(){
+  const list = PACKAGES.filter(p=>
+    (state.line==="all"||p.line===state.line) &&
+    (state.type==="all"||p.type===state.type));
+  const g=document.getElementById("pkgGrid");
+  g.innerHTML = list.length ? list.map(pkgCard).join("")
+    : `<div class="skeleton" style="grid-column:1/-1">ไม่มีแพ็กเกจในเงื่อนไขนี้</div>`;
+}
+function miniRows(arr,el){
+  document.getElementById(el).innerHTML = arr.map(a=>{
+    const price = a.min===a.max ? `฿${fmt(a.min)}` : `฿${fmt(a.min)}–${fmt(a.max)}`;
+    return `<div class="mrow">
+      <div><div class="nm">${a.name}</div><div class="ct">${a.cat}</div></div>
+      <div class="pr">${price}<small>${a.unit}</small></div></div>`;
+  }).join("");
+}
+function renderSLA(){
+  document.getElementById("slaGrid").innerHTML = SLA.map(s=>`
+    <div class="slacard">
+      <h3>${s.label}</h3>
+      <p>${s.desc}</p>
+      <div class="lv">Lite · ตอบรับ <b>≤${s.lr}ชม</b> · แก้ <b>≤${s.ld}วัน</b></div>
+      <div class="lv">Pro · ตอบรับ <span class="pro">≤${s.pr}ชม</span> · แก้ <span class="pro">≤${s.pd}วัน</span></div>
+      <div class="lv" style="color:var(--ink-dim)">${s.channel} · ${s.hours}</div>
+    </div>`).join("");
+}
+function renderTerms(){
+  document.getElementById("termsAcc").innerHTML = TERMS.map(t=>
+    `<details><summary>${t[0]}</summary><div class="body">${t[1]}</div></details>`).join("");
+}
+
+/* ---- live fetch from Google Sheets (gviz) ---- */
+async function fetchTab(sheet){
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`;
+  const res=await fetch(url);
+  const txt=await res.text();
+  const json=JSON.parse(txt.replace(/^[\s\S]*?setResponse\(/,"").replace(/\);?\s*$/,""));
+  return (json.table.rows||[]).map(r=>(r.c||[]).map(c=>c?c.v:null));
+}
+const stripLine = s => String(s||"").replace(/^\d+_\s*/,"").trim();
+
+async function goLive(){
+  const badge=document.getElementById("liveBadge"), txt=document.getElementById("liveTxt");
+  try{
+    const [pk,ad,dm,sl] = await Promise.all([
+      fetchTab("packages"), fetchTab("addons"), fetchTab("domain_services"), fetchTab("sla_levels")
+    ]);
+    const pkRows=pk.filter(r=>r[0]&&r[2]&&r[0]!=="package_id").map(r=>({
+      id:r[0], line:stripLine(r[1]), name:r[2], type:String(r[3]||"").trim(),
+      setup:r[4], monthly:r[5], yearly:r[6], onetime:r[7], timeline:r[8],
+      warranty:r[9], sla:String(r[10]||"lite").trim(), cap:r[11]||""
+    }));
+    if(pkRows.length){ PACKAGES=pkRows; renderLines(); renderPkgs(); }
+    const adRows=ad.filter(r=>r[2]&&r[0]!=="addon_seq").map(r=>({cat:r[1],name:r[2],min:r[3],max:r[4],unit:r[5]}));
+    if(adRows.length){ ADDONS=adRows; miniRows(ADDONS,"addonGrid"); }
+    const dmRows=dm.filter(r=>r[2]&&r[0]!=="domain_seq").map(r=>({cat:r[1],name:r[2],min:r[3],max:r[4],unit:r[5]}));
+    if(dmRows.length){ DOMAINS=dmRows; miniRows(DOMAINS,"domainGrid"); }
+    const slRows=sl.filter(r=>r[1]&&r[0]!=="sla_code").map(r=>({label:r[1],desc:r[2],lr:r[3],ld:r[4],pr:r[5],pd:r[6],channel:r[7],hours:r[8]}));
+    if(slRows.length){ SLA=slRows; renderSLA(); }
+    badge.className="live on"; txt.textContent="ข้อมูลสด · ซิงก์จากชีตแล้ว";
+  }catch(e){
+    badge.className="live snap"; txt.textContent="Snapshot · แสดงข้อมูลล่าสุดที่บันทึกไว้";
+    console.warn("Live fetch failed, using snapshot:",e);
+  }
+}
+
+/* ---- init ---- */
+renderLines(); renderPkgs(); miniRows(ADDONS,"addonGrid"); miniRows(DOMAINS,"domainGrid"); renderSLA(); renderTerms();
+goLive();
+</script>
+</body>
+</html>
