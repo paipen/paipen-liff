@@ -60,6 +60,32 @@
   @keyframes markFloat2{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(24px,18px) rotate(4deg)}}
   @media(prefers-reduced-motion:reduce){.orb,.mark-bg{animation:none}}
 
+  /* ---- running black cat ---- */
+  .cat-run{position:fixed;left:0;bottom:14px;z-index:48;pointer-events:none;
+    will-change:transform;transform:translateX(-190px)}
+  .cat-bob{transform-origin:center bottom;transition:transform .35s ease}
+  .cat-run img.cf{display:none;width:178px;height:auto;filter:drop-shadow(0 7px 6px rgba(0,0,0,.55))}
+  .cat-run img.cf.on{display:block}
+  /* head turns on the neck (real-cat glance), not a whole-body flip */
+  .cat-head{transform-box:view-box;transform-origin:200px 102px;transition:transform .5s cubic-bezier(.5,.05,.3,1)}
+  .cat-run.look-left .cat-head{transform:rotate(-18deg)}  /* glance up/back */
+  .cat-run.look-right .cat-head{transform:rotate(6deg)}   /* glance down/forward */
+  .cat-run.sitting .cat-bob{transform:translateY(7px)}    /* settle when sitting */
+  .cat-shadow{position:absolute;left:30px;bottom:-3px;width:120px;height:9px;border-radius:50%;
+    background:rgba(0,0,0,.45);filter:blur(3px)}
+  .leg{transform-box:fill-box;transform-origin:50% 8%}
+  .cat-run.walking .cat-bob{animation:catBob .42s ease-in-out infinite}
+  .cat-run.walking .cat-shadow{animation:catShadow .42s ease-in-out infinite}
+  .cat-run.walking .leg.a{animation:legA .42s ease-in-out infinite}
+  .cat-run.walking .leg.b{animation:legB .42s ease-in-out infinite}
+  .cat-tail{transform-box:view-box;transform-origin:74px 112px;animation:tailWag 1s ease-in-out infinite}
+  @keyframes catBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes catShadow{0%,100%{transform:scaleX(1);opacity:.45}50%{transform:scaleX(.82);opacity:.3}}
+  @keyframes legA{0%,100%{transform:rotate(17deg)}50%{transform:rotate(-17deg)}}
+  @keyframes legB{0%,100%{transform:rotate(-17deg)}50%{transform:rotate(17deg)}}
+  @keyframes tailWag{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(11deg)}}
+  @media(prefers-reduced-motion:reduce){.cat-run{display:none}}
+
   /* nav */
   nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
     background:rgba(11,8,5,.74);border-bottom:1px solid var(--line)}
@@ -240,6 +266,20 @@
   <span class="orb o1"></span><span class="orb o2"></span>
   <img class="mark-bg br" src="https://paipen.github.io/paipen-liff/logo.png" alt="" aria-hidden="true">
   <img class="mark-bg tl" src="https://paipen.github.io/paipen-liff/logo.png" alt="" aria-hidden="true">
+</div>
+
+<!-- running black cat -->
+<div class="cat-run" aria-hidden="true">
+  <div class="cat-shadow"></div>
+  <div class="cat-bob">
+    <img class="cf" data-k="walk1" src="https://paipen.github.io/paipen-liff/cat1.png" alt="">
+    <img class="cf" data-k="walk2" src="https://paipen.github.io/paipen-liff/cat2.png" alt="">
+    <img class="cf" data-k="walk3" src="https://paipen.github.io/paipen-liff/cat3.png" alt="">
+    <img class="cf" data-k="walk4" src="https://paipen.github.io/paipen-liff/cat4.png" alt="">
+    <img class="cf" data-k="walk5" src="https://paipen.github.io/paipen-liff/cat6.png" alt="">
+    <img class="cf" data-k="walk6" src="https://paipen.github.io/paipen-liff/cat7.png" alt="">
+    <img class="cf" data-k="sit" src="https://paipen.github.io/paipen-liff/cat5.png" alt="">
+  </div>
 </div>
 
 <nav>
@@ -625,6 +665,37 @@ async function goLive(){
 /* ---- init ---- */
 renderLines(); renderPkgs(); miniRows(ADDONS,"addonGrid"); miniRows(DOMAINS,"domainGrid"); renderSLA(); renderTerms();
 goLive();
+
+/* ---- cat sprite behaviour: walk(4-frame) in → sit → look → walk out → loop ---- */
+(function catCtrl(){
+  const cat=document.querySelector(".cat-run");
+  if(!cat) return;
+  const F={};
+  cat.querySelectorAll(".cf").forEach(im=>F[im.dataset.k]=im);
+  let cur=null;
+  const show=k=>{ if(!F[k]||cur===F[k])return; if(cur)cur.classList.remove("on"); cur=F[k]; cur.classList.add("on"); };
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const CATW=160, OFF=-210;
+  const move=(x,dur)=>{cat.style.transition=`transform ${dur}ms linear`;cat.style.transform=`translateX(${x}px)`;};
+  const jump=x=>{cat.style.transition="none";cat.style.transform=`translateX(${x}px)`;void cat.offsetWidth;};
+  let walkTimer=null, wf=1;
+  const startWalk=()=>{ cat.classList.add("walking"); wf=1; show("walk1");
+    clearInterval(walkTimer); walkTimer=setInterval(()=>{ wf=wf%6+1; show("walk"+wf); },150); };
+  const stopWalk=()=>{ clearInterval(walkTimer); walkTimer=null; cat.classList.remove("walking"); };
+  (async function loop(){
+    while(true){
+      cat.classList.remove("sitting"); startWalk(); jump(OFF); await wait(90);
+      const center=Math.round(window.innerWidth/2 - CATW/2);
+      const inDur=Math.max(6200,(center-OFF)*11);
+      move(center,inDur); await wait(inDur+60);
+      stopWalk(); cat.classList.add("sitting"); show("sit"); await wait(3800);
+      cat.classList.remove("sitting"); startWalk();
+      const outX=window.innerWidth+120, outDur=Math.max(6200,(outX-center)*11);
+      move(outX,outDur); await wait(outDur+60);
+      stopWalk(); await wait(1300);
+    }
+  })();
+})();
 </script>
 </body>
 </html>
